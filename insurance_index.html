@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fee Schedule Lookup – All Plans</title>
+  <style>
+    /* ===== Light theme variables ===== */
+    :root { 
+      --bg:#ffffff;           /* page background */
+      --panel:#fafafa;        /* table panel */
+      --muted:#555555;        /* muted text */
+      --fg:#000000;           /* main text */
+      --accent:#003366;       /* header highlight / sort caret */
+      --border:#cccccc;       /* borders */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--fg)}
+
+    .wrap{max-width:1200px;margin:0 auto;padding:24px;min-width:1100px}
+    h1{margin:0 0 18px;font-size:26px}
+
+    .toolbar{display:grid;grid-template-columns:340px 1fr auto;gap:12px;align-items:center;margin-bottom:12px}
+    .toolbar .select, .toolbar .search {
+      width:100%;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid var(--border);color:var(--fg);outline:none
+    }
+    .meta{font-size:12px;color:var(--muted);text-align:right}
+
+    /* Plan note box */
+    .notice{
+      margin:12px 0;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      background:#fff;
+      color: var(--fg);
+      border-radius:10px;
+      font-size:14px;
+    }
+    .notice b { font-weight:600; }
+    .notice small { color: var(--muted); }
+
+    table{width:100%;border-collapse:collapse;border:1px solid var(--border);background:var(--panel)}
+    thead th{position:sticky;top:0;background:#f2f2f2;color:#000;z-index:1}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-variant-numeric:tabular-nums}
+    tbody tr:hover{background:#eef6ff}
+    .clickable{cursor:pointer;user-select:none}
+    .sort-ind{color:var(--accent);font-size:11px;margin-left:6px}
+
+    .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;color:var(--muted)}
+    .pager{display:flex;gap:6px}
+    .btn{background:#fff;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
+    .btn[disabled]{opacity:.45;cursor:not-allowed}
+    .perpage{background:#fff;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Fee Schedule Lookup – All Plans</h1>
+    <div class="toolbar">
+      <select id="plan" class="select" title="Choose an insurance/plan"></select>
+      <input id="q" class="search" placeholder="Search HCPCS or text… (e.g., A7030 or mask)" autocomplete="off" />
+      <div class="meta"><span id="count">0</span> rows • <span id="status">Select a plan</span></div>
+    </div>
+
+    <!-- Plan-specific note goes here -->
+    <div id="plan-note" class="notice" hidden></div>
+
+    <table>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <div class="footer">
+      <div>
+        Rows per page:
+        <select id="perpage" class="perpage">
+          <option selected>5</option>
+          <option>10</option>
+          <option>20</option>
+        </select>
+      </div>
+      <div class="pager">
+        <button id="prev" class="btn">Prev</button>
+        <span id="pageinfo"></span>
+        <button id="next" class="btn">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== CONFIG: add each insurance here =====
+    // For each entry you can:
+    //  - url: raw GitHub CSV URL
+    //  - columns (optional): array of column indexes to display (e.g., [0,1,2])
+    //  - headers (optional): array of header names matching 'columns' length
+    //  - note (optional): plain text or simple HTML to show above the table
+const INSURERS = {
+  'CBA (Former CBA APR 2025)': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA_APR2025.csv',
+    note: 'Former CBA rates as of <b>Apr 2025</b>. Verify modifiers for oxygen & seating.',
+  },
+
+  'Rural & Non CBA (custom view)': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
+    columns: [0,1,2,4,89,90,113],
+    headers: ['HCPCS','Mod','Mod2','CATG','TX (NR)','TX (R)','Description'],
+    note: 'Columns shown: HCPCS, Modifiers, CATG, TX allowances, Description.',
+  },
+
+  'BCBS of Texas': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/BCBS_2024_DMEPOS_FEE.csv',
+    // shows all columns
+    note: 'BCBS 2024 DMEPOS schedule. Check plan-specific prior auth rules.',
+  },
+
+  'Amerigroup': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/Amerigroup.csv',
+    columns: [0,1,5,7,1,2,3],
+    headers: ['HCPCS','Mod','Purchase','Rental','Age From','To',' '],
+    note: 'Please note - these prices are different than those on our copy of the Fee Schedule in Drive. This is because per our Amerigroup contract, they pay 70% of the Medicaid fee schedule. So these numbers reflect 70% of Medicaids allowable',
+  },
+
+  'UHC': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
+    columns: [0,1,89,113],
+    headers: ['HCPCS','Mod','Allowable','Description'],
+    note: 'We are out of network with United Healthcare, however most plans will pay out of network at Medicare base rates. There is a chance the allowable might be different from what is shown below, but in most cases it will be accurate.',
+  },
+
+  'AETNA': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
+    columns: [0,1,89,113],
+    headers: ['HCPCS','Mod','Allowable','Description'],
+    note: 'We are out of network with AETNA, however most plans will pay out of network at Medicare base rates. There is a chance the allowable might be different from what is shown below, but in most cases it will be accurate.'
+  },
+
+  'Medicaid (TMHP)': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/TMHP.csv',
+    columns: [1,2,3,4,5,7,6,9,8],
+    headers: ['HCPCS','Mod','Age from','To',' ','Purchase','Effective','Rental','Effective'],
+    note: 'TMHP schedule with custom column order; verify effective dates.',
+  },
+
+  // Existing ones
+  'Amerivantage 2025': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/amerivantage_2025.csv',
+    // note: 'Optional Amerivantage note here.'
+  },
+};
+
+
+    // Optional: default plan via URL param ?plan=Name (case-insensitive match on keys)
+    const params = new URLSearchParams(location.search);
+    const defaultPlan = params.get('plan');
+
+    // ===== Utilities =====
+    const $ = (s, r=document) => r.querySelector(s);
+    const el = (t, a={}, kids=[]) => { const n=document.createElement(t); for(const [k,v] of Object.entries(a)){ if(k==='class')n.className=v; else if(k==='text')n.textContent=v; else n.setAttribute(k,v);} for(const c of [].concat(kids)) n.append(c); return n; };
+
+    function parseCSV(text){
+      const rows=[]; let row=[], field='', i=0, inQ=false; const push=()=>{row.push(field); field='';};
+      while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"'; i++;} else inQ=false; } else field+=c; }
+        else { if(c==='"') inQ=true; else if(c===','){ push(); } else if(c==='\n'){ push(); rows.push(row); row=[]; } else if(c==='\r'){} else field+=c; }
+        i++; }
+      if(field!==''||row.length){ push(); rows.push(row); }
+      if(rows.length && rows[rows.length-1].every(x=>x==='')) rows.pop();
+      return rows;
+    }
+
+    // ===== State =====
+    let headers=[], data=[], filtered=[], sortKey=0, sortDir=1, page=1;
+    const planSel = $('#plan');
+    const q = $('#q');
+    const thead = $('#thead');
+    const tbody = $('#tbody');
+    const perSel = $('#perpage');
+    const pageInfo = $('#pageinfo');
+    const prev = $('#prev');
+    const next = $('#next');
+    const count = $('#count');
+    const status = $('#status');
+    const noteEl = document.getElementById('plan-note');
+
+    // Populate dropdown
+    function populatePlans(){
+      planSel.innerHTML = '';
+      Object.keys(INSURERS).forEach(name => {
+        planSel.append(new Option(name, name));
+      });
+      if (defaultPlan) {
+        const match = Object.keys(INSURERS).find(k => k.toLowerCase() === defaultPlan.toLowerCase());
+        if (match) planSel.value = match;
+      }
+    }
+
+    function num(v){ const s=String(v).replace(/[$,\s]/g,''); const n=parseFloat(s); return Number.isFinite(n)?n:NaN; }
+
+    function renderHead(displayHeaders){
+      thead.innerHTML='';
+      const tr = el('tr');
+      displayHeaders.forEach((h, idx) => {
+        const th = el('th', { class: 'clickable' });
+        const label = el('span', { text: h || `Col ${idx+1}` });
+        const ind = el('span', { class: 'sort-ind', text: idx === sortKey ? (sortDir === 1 ? '▲' : '▼') : '' });
+        th.append(label, ind);
+        th.addEventListener('click', () => {
+          if (sortKey === idx) sortDir *= -1; else { sortKey = idx; sortDir = 1; }
+          renderHead(displayHeaders); update();
+        });
+        tr.append(th);
+      });
+      thead.append(tr);
+    }
+
+    function projectRow(row, cfg){
+      if (!cfg.columns || !cfg.headers) return row;
+      return cfg.columns.map(ci => row[ci] ?? '');
+    }
+
+    function update(){
+      const cfg = INSURERS[planSel.value];
+      const proj = data.map(r => projectRow(r, cfg));
+      const term = q.value.trim().toLowerCase();
+      filtered = term ? proj.filter(r => r.some(c => String(c||'').toLowerCase().includes(term))) : proj;
+      // sort
+      filtered.sort((a,b)=>{
+        const av=a[sortKey]??'', bv=b[sortKey]??''; const an=num(av), bn=num(bv);
+        const cmp = (!Number.isNaN(an)&&!Number.isNaN(bn)) ? (an-bn) : String(av).localeCompare(String(bv),undefined,{numeric:true});
+        return cmp * sortDir;
+      });
+      // paginate
+      const per=parseInt(perSel.value,10); const total=filtered.length; const pages=Math.max(1,Math.ceil(total/per)); if(page>pages) page=pages; const start=(page-1)*per; const slice=filtered.slice(start,start+per);
+      // render
+      tbody.innerHTML='';
+      for(const row of slice){ const tr=el('tr'); for(const cell of row){ tr.append(el('td',{text:cell})); } tbody.append(tr); }
+      count.textContent = total.toLocaleString();
+      pageInfo.textContent = `Page ${page} / ${pages}`;
+      prev.disabled = page<=1; next.disabled = page>=pages;
+    }
+
+    async function loadPlan(){
+      const name = planSel.value;
+      const cfg = INSURERS[name];
+      if (!cfg) return;
+      status.textContent = 'Loading…';
+      page = 1; sortKey = 0; sortDir = 1; q.value = '';
+
+      // show/hide plan note
+      if (cfg.note) {
+        noteEl.hidden = false;
+        noteEl.innerHTML = cfg.note;   // allow simple HTML in notes
+      } else {
+        noteEl.hidden = true;
+        noteEl.innerHTML = '';
+      }
+
+      try {
+        const res = await fetch(cfg.url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const rows = parseCSV(text);
+        headers = rows[0] || [];
+        data = rows.slice(1);
+        const displayHeaders = (cfg.columns && cfg.headers) ? cfg.headers : headers;
+        renderHead(displayHeaders);
+        update();
+        status.textContent = name;
+      } catch (e) {
+        console.error(e);
+        status.textContent = 'Error loading CSV';
+        thead.innerHTML = '<tr><th>Error</th></tr>';
+        tbody.innerHTML = '';
+        count.textContent = '0';
+        pageInfo.textContent = '';
+      }
+    }
+
+    // events
+    planSel.addEventListener('change', loadPlan);
+    q.addEventListener('input', () => { page = 1; update(); });
+    perSel.addEventListener('change', () => { page = 1; update(); });
+    prev.addEventListener('click', () => { if (page>1) { page--; update(); } });
+    next.addEventListener('click', () => { page++; update(); });
+
+    // init
+    populatePlans();
+    if (!planSel.value) planSel.selectedIndex = 0;
+    loadPlan();
+  </script>
+</body>
+</html>
+
