@@ -9,10 +9,9 @@
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--fg)}
-    .wrap{max-width:1200px;margin:0 auto;padding:24px}
+    .wrap{max-width:1200px;margin:0 auto;padding:24px;min-width:1100px}
     h1{margin:0 0 18px;font-size:26px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
-    @media (max-width: 1000px){ .grid{grid-template-columns:1fr} }
     .card{background:transparent}
     .card h2{margin:0 0 8px}
     .sub{color:var(--muted);margin:0 0 12px}
@@ -29,15 +28,13 @@
     .btn[disabled]{opacity:.45;cursor:not-allowed}
     .perpage{background:var(--panel);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
     .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(126,231,135,.1);color:var(--accent2);border:1px solid rgba(126,231,135,.3);font-size:12px}
-    /* Keep desktop/table layout inside narrow iframes */
-    .wrap{min-width:1100px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Fee Schedules – Side by Side</h1>
     <div class="grid">
-      <!-- LEFT PANEL -->
+      <!-- LEFT PANEL (generic, all columns) -->
       <section class="card">
         <h2 id="left-title">CBA</h2>
         <div class="sub">CSV: <code id="left-src"></code></div>
@@ -59,7 +56,7 @@
         </div>
       </section>
 
-      <!-- RIGHT PANEL -->
+      <!-- RIGHT PANEL (custom columns/indexes like your snippet) -->
       <section class="card">
         <h2 id="right-title">Rural & Non CBA</h2>
         <div class="sub">CSV: <code id="right-src"></code></div>
@@ -85,16 +82,19 @@
 
   <script>
     // ====== CONFIG ======
-    // Edit these four values to switch sources/titles.
     const LEFT_TITLE = 'CBA';
     const RIGHT_TITLE = 'Rural & Non CBA';
-    const LEFT_CSV_URL  = 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA_APR2025.csv'; // <-- update if needed
-    const RIGHT_CSV_URL = 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/DMEPOS25_APR25.csv'; // <-- update if needed
+    const LEFT_CSV_URL  = 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA_APR2025.csv';
+    const RIGHT_CSV_URL = 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv';
 
-    // Also supports query params override: ?left=URL&right=URL&leftTitle=...&rightTitle=...
+    // Right-side exact headers/columns (from your snippet)
+    const RIGHT_HEADER_NAMES = ['HCPCS','Mod','Mod2','CATG','TX (NR)','TX (R)','Description'];
+    const RIGHT_HEADER_COLS  = [0,1,2,4,89,90,113];
+
+    // URL overrides
     const params = new URLSearchParams(location.search);
-    const csvLeft  = params.get('left') || LEFT_CSV_URL;
-    const csvRight = params.get('right') || RIGHT_CSV_URL;
+    const csvLeft   = params.get('left') || LEFT_CSV_URL;
+    const csvRight  = params.get('right') || RIGHT_CSV_URL;
     const titleLeft  = params.get('leftTitle')  || LEFT_TITLE;
     const titleRight = params.get('rightTitle') || RIGHT_TITLE;
 
@@ -112,16 +112,36 @@
       return rows;
     }
 
-    function buildTable(rootIds, csvUrl){
-      const thead=$(rootIds.thead), tbody=$(rootIds.tbody), q=$(rootIds.q), perSel=$(rootIds.per), pageInfo=$(rootIds.pageinfo), prev=$(rootIds.prev), next=$(rootIds.next), src=$(rootIds.src);
-      src.textContent = csvUrl;
+    function buildTable(opts){
+      const thead=$(opts.thead), tbody=$(opts.tbody), q=$(opts.q), perSel=$(opts.per), pageInfo=$(opts.pageinfo), prev=$(opts.prev), next=$(opts.next), src=$(opts.src);
+      src.textContent = opts.csvUrl;
       let headers=[], data=[], filtered=[], sortKey=0, sortDir=1, page=1;
 
       function num(v){ const s=String(v).replace(/[$,\s]/g,''); const n=parseFloat(s); return Number.isFinite(n)?n:NaN; }
-      function renderHead(){ thead.innerHTML=''; const tr=el('tr'); headers.forEach((h,idx)=>{ const th=el('th',{class:'clickable'}); const label=el('span',{text:h||`Col ${idx+1}`}); const ind=el('span',{class:'sort-ind',text: idx===sortKey ? (sortDir===1?'▲':'▼') : ''}); th.append(label,ind); th.addEventListener('click',()=>{ if(sortKey===idx) sortDir*=-1; else {sortKey=idx; sortDir=1;} renderHead(); update(); }); tr.append(th); }); thead.append(tr); }
+
+      function renderHead(){
+        thead.innerHTML=''; const tr=el('tr');
+        const headList = (opts.columns && opts.headerNames) ? opts.headerNames : headers;
+        headList.forEach((h,idx)=>{
+          const th=el('th',{class:'clickable'});
+          const label=el('span',{text:h||`Col ${idx+1}`});
+          const ind=el('span',{class:'sort-ind',text: idx===sortKey ? (sortDir===1?'▲':'▼') : ''});
+          th.append(label,ind);
+          th.addEventListener('click',()=>{ if(sortKey===idx) sortDir*=-1; else {sortKey=idx; sortDir=1;} renderHead(); update(); });
+          tr.append(th);
+        });
+        thead.append(tr);
+      }
+
+      function rowProject(row){
+        if (!(opts.columns && opts.headerNames)) return row; // left: all columns
+        const out=[]; for(const ci of opts.columns){ out.push(row[ci] ?? ''); } return out; // right: only selected columns
+      }
+
       function update(){
         const term=q.value.trim().toLowerCase();
-        filtered = term ? data.filter(r=>r.some(c=>String(c||'').toLowerCase().includes(term))) : data.slice();
+        const proj = data.map(rowProject);
+        filtered = term ? proj.filter(r=>r.some(c=>String(c||'').toLowerCase().includes(term))) : proj;
         filtered.sort((a,b)=>{ const av=a[sortKey]??'', bv=b[sortKey]??''; const an=num(av), bn=num(bv); const cmp = (!Number.isNaN(an)&&!Number.isNaN(bn)) ? (an-bn) : String(av).localeCompare(String(bv),undefined,{numeric:true}); return cmp*sortDir; });
         const per=parseInt(perSel.value,10); const total=filtered.length; const pages=Math.max(1,Math.ceil(total/per)); if(page>pages) page=pages; const start=(page-1)*per; const slice=filtered.slice(start,start+per);
         tbody.innerHTML=''; for(const row of slice){ const tr=el('tr'); for(const cell of row){ tr.append(el('td',{text:cell})); } tbody.append(tr); }
@@ -135,7 +155,7 @@
       next.addEventListener('click',()=>{ page++; update(); });
 
       (async()=>{
-        const res = await fetch(csvUrl, {cache:'no-store'}); if(!res.ok) throw new Error('Fetch '+res.status);
+        const res = await fetch(opts.csvUrl, {cache:'no-store'}); if(!res.ok) throw new Error('Fetch '+res.status);
         const text = await res.text(); const rows=parseCSV(text); headers=rows[0]||[]; data=rows.slice(1); renderHead(); update();
       })().catch(e=>{ console.error(e); thead.innerHTML='<tr><th>Error loading CSV</th></tr>'; });
     }
@@ -144,10 +164,9 @@
     document.getElementById('left-title').textContent = titleLeft;
     document.getElementById('right-title').textContent = titleRight;
 
-    // Build left and right tables
-    buildTable({ thead:'#left-thead', tbody:'#left-tbody', q:'#left-q', per:'#left-per', pageinfo:'#left-pageinfo', prev:'#left-prev', next:'#left-next', src:'#left-src' }, csvLeft);
-    buildTable({ thead:'#right-thead', tbody:'#right-tbody', q:'#right-q', per:'#right-per', pageinfo:'#right-pageinfo', prev:'#right-prev', next:'#right-next', src:'#right-src' }, csvRight);
+    // Build left (generic) and right (custom columns) tables
+    buildTable({ thead:'#left-thead', tbody:'#left-tbody', q:'#left-q', per:'#left-per', pageinfo:'#left-pageinfo', prev:'#left-prev', next:'#left-next', src:'#left-src', csvUrl: csvLeft });
+    buildTable({ thead:'#right-thead', tbody:'#right-tbody', q:'#right-q', per:'#right-per', pageinfo:'#right-pageinfo', prev:'#right-prev', next:'#right-next', src:'#right-src', csvUrl: csvRight, columns: RIGHT_HEADER_COLS, headerNames: RIGHT_HEADER_NAMES });
   </script>
 </body>
 </html>
-
