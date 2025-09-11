@@ -3,41 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Medicare Fee Schedules</title>
+  <title>Fee Schedules – Side by Side (Light)</title>
   <style>
-    :root { --bg:#ffffff; --panel:#fafafa; --muted:#555555; --fg:#000000; --accent:#003366; --accent2:#008000; --border:#cccccc; }
+    /* ===== Light theme variables ===== */
+    :root { 
+      --bg:#ffffff;           /* page background */
+      --panel:#fafafa;        /* table panel */
+      --muted:#555555;        /* muted text */
+      --fg:#000000;           /* main text */g
+      --accent:#003366;       /* header highlight / sort caret */
+      --accent2:#008000;      /* badge (unused) */
+      --border:#cccccc;       /* borders */
+    }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--fg)}
     .wrap{max-width:1200px;margin:0 auto;padding:24px;min-width:1100px}
     h1{margin:0 0 18px;font-size:26px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
-    .card{background:transparent}
     .card h2{margin:0 0 8px}
-    .sub{color:var(--muted);margin:0 0 12px}
-    .search{width:100%;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--border);color:var(--fg);outline:none;margin-bottom:10px}
+    .search{width:100%;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid var(--border);color:var(--fg);outline:none;margin-bottom:10px}
+
     table{width:100%;border-collapse:collapse;border:1px solid var(--border);background:var(--panel)}
     thead th{position:sticky;top:0;background:#f2f2f2;color:#000;z-index:1}
     th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-variant-numeric:tabular-nums}
-    tbody tr:hover{background:rgba(138,180,248,.08)}
+    tbody tr:hover{background:#eef6ff}
     .clickable{cursor:pointer;user-select:none}
     .sort-ind{color:var(--accent);font-size:11px;margin-left:6px}
+
     .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;color:var(--muted)}
     .pager{display:flex;gap:6px}
-    .btn{background:var(--panel);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
+    .btn{background:#fff;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
     .btn[disabled]{opacity:.45;cursor:not-allowed}
-    .perpage{background:var(--panel);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
-    .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(126,231,135,.1);color:var(--accent2);border:1px solid rgba(126,231,135,.3);font-size:12px}
+    .perpage{background:#fff;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Medicare Fee Schedules</h1>
+    <h1>Fee Schedules – Side by Side</h1>
     <div class="grid">
       <!-- LEFT PANEL (generic, all columns) -->
       <section class="card">
         <h2 id="left-title">CBA</h2>
-       <input id="left-q" class="search" placeholder="Enter HCPCS Code" autocomplete="off" />
+        <input id="left-q" class="search" placeholder="Enter HCPCS Code" autocomplete="off" />
         <table>
           <thead id="left-thead"></thead>
           <tbody id="left-tbody"></tbody>
@@ -89,14 +97,14 @@
     const RIGHT_HEADER_NAMES = ['HCPCS','Mod','Mod2','CATG','TX (NR)','TX (R)','Description'];
     const RIGHT_HEADER_COLS  = [0,1,2,4,89,90,113];
 
-    // URL overrides
+    // URL overrides (optional)
     const params = new URLSearchParams(location.search);
     const csvLeft   = params.get('left') || LEFT_CSV_URL;
     const csvRight  = params.get('right') || RIGHT_CSV_URL;
     const titleLeft  = params.get('leftTitle')  || LEFT_TITLE;
     const titleRight = params.get('rightTitle') || RIGHT_TITLE;
 
-    // ====== Utilities ======
+    // ===== Utilities =====
     const $ = (s, r=document) => r.querySelector(s);
     const el = (t, a={}, kids=[]) => { const n=document.createElement(t); for(const [k,v] of Object.entries(a)){ if(k==='class')n.className=v; else if(k==='text')n.textContent=v; else n.setAttribute(k,v);} for(const c of [].concat(kids)) n.append(c); return n; };
 
@@ -110,9 +118,12 @@
       return rows;
     }
 
+    /** Build a table
+     * opts: { thead, tbody, q, per, pageinfo, prev, next, csvUrl, columns?, headerNames? }
+     * - If columns+headerNames are provided, only those columns are rendered with the given headers
+     */
     function buildTable(opts){
-      const thead=$(opts.thead), tbody=$(opts.tbody), q=$(opts.q), perSel=$(opts.per), pageInfo=$(opts.pageinfo), prev=$(opts.prev), next=$(opts.next), src=$(opts.src);
-      src.textContent = opts.csvUrl;
+      const thead=$(opts.thead), tbody=$(opts.tbody), q=$(opts.q), perSel=$(opts.per), pageInfo=$(opts.pageinfo), prev=$(opts.prev), next=$(opts.next);
       let headers=[], data=[], filtered=[], sortKey=0, sortDir=1, page=1;
 
       function num(v){ const s=String(v).replace(/[$,\s]/g,''); const n=parseFloat(s); return Number.isFinite(n)?n:NaN; }
@@ -163,8 +174,8 @@
     document.getElementById('right-title').textContent = titleRight;
 
     // Build left (generic) and right (custom columns) tables
-    buildTable({ thead:'#left-thead', tbody:'#left-tbody', q:'#left-q', per:'#left-per', pageinfo:'#left-pageinfo', prev:'#left-prev', next:'#left-next', src:'#left-src', csvUrl: csvLeft });
-    buildTable({ thead:'#right-thead', tbody:'#right-tbody', q:'#right-q', per:'#right-per', pageinfo:'#right-pageinfo', prev:'#right-prev', next:'#right-next', src:'#right-src', csvUrl: csvRight, columns: RIGHT_HEADER_COLS, headerNames: RIGHT_HEADER_NAMES });
+    buildTable({ thead:'#left-thead', tbody:'#left-tbody', q:'#left-q', per:'#left-per', pageinfo:'#left-pageinfo', prev:'#left-prev', next:'#left-next', csvUrl: csvLeft });
+    buildTable({ thead:'#right-thead', tbody:'#right-tbody', q:'#right-q', per:'#right-per', pageinfo:'#right-pageinfo', prev:'#right-prev', next:'#right-next', csvUrl: csvRight, columns: RIGHT_HEADER_COLS, headerNames: RIGHT_HEADER_NAMES });
   </script>
 </body>
 </html>
