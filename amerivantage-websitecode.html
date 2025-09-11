@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Amerivantage 2025 DMEPOS Fee Schedule</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2a;
+      --muted: #93a1b1;
+      --fg: #e6edf3;
+      --accent: #8ab4f8;
+      --accent-2: #7ee787;
+      --border: #1f2a44;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg); color: var(--fg);
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 12px; font-size: 24px; }
+    .sub { color: var(--muted); margin-bottom: 16px; }
+
+    .toolbar { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .search {
+      width: 100%; padding: 10px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--border); color: var(--fg);
+      outline: none; box-shadow: none;
+    }
+    .meta { font-size: 12px; color: var(--muted); text-align: right; }
+
+    table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); background: var(--panel); }
+    thead th { position: sticky; top: 0; background: #141f33; z-index: 1; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; font-variant-numeric: tabular-nums; }
+    tbody tr:hover { background: rgba(138,180,248,0.08); }
+    .clickable { cursor: pointer; user-select: none; }
+    .sort-ind { color: var(--accent); font-size: 11px; margin-left: 6px; }
+
+    .footer { display:flex; justify-content: space-between; align-items:center; gap:12px; margin-top: 10px; color: var(--muted); }
+    .pager { display: flex; gap: 6px; }
+    .btn { background: var(--panel); color: var(--fg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+    .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+    .perpage { background: var(--panel); color: var(--fg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+    .badge { display:inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(126,231,135,0.1); color: var(--accent-2); border: 1px solid rgba(126,231,135,0.3); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Amerivantage 2025 DMEPOS Fee Schedule</h1>
+    <div class="sub">Source: <code id="src"></code></div>
+
+    <div class="toolbar">
+      <input id="q" class="search" placeholder="Search HCPCS code or rate… (e.g., A7030 or 87.78)" autocomplete="off" />
+      <div class="meta"><span id="count">0</span> rows • <span class="badge" id="status">Loading…</span></div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <div>
+        Rows per page:
+        <select id="perpage" class="perpage">
+          <option>25</option>
+          <option selected>50</option>
+          <option>100</option>
+          <option>250</option>
+          <option>1000</option>
+        </select>
+      </div>
+      <div class="pager">
+        <button id="prev" class="btn">Prev</button>
+        <span id="pageinfo"></span>
+        <button id="next" class="btn">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // === CONFIG ===
+    // Update this URL if you change your GitHub path; everything else will just work.
+    const CSV_URL = "https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/amerivantage_2025.csv";
+
+    // === Utilities ===
+    const $ = (sel) => document.querySelector(sel);
+    const el = (tag, attrs = {}, children = []) => {
+      const n = document.createElement(tag);
+      for (const [k,v] of Object.entries(attrs)) {
+        if (k === 'class') n.className = v; else if (k === 'text') n.textContent = v; else n.setAttribute(k,v);
+      }
+      for (const c of [].concat(children)) n.append(c);
+      return n;
+    };
+
+    // RFC4180-friendly CSV parser (handles quotes, commas, CRLF)
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], field = '', i = 0, inQuotes = false;
+      while (i < text.length) {
+        const c = text[i];
+        if (inQuotes) {
+          if (c === '"') {
+            if (text[i+1] === '"') { field += '"'; i++; } // escaped quote
+            else { inQuotes = false; }
+          } else {
+            field += c;
+          }
+        } else {
+          if (c === '"') inQuotes = true;
+          else if (c === ',') { row.push(field); field = ''; }
+          else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+          else if (c === '\r') { /* ignore CR */ }
+          else { field += c; }
+        }
+        i++;
+      }
+      // push last field
+      row.push(field); rows.push(row);
+      // trim possible trailing blank line
+      if (rows.length && rows[rows.length-1].every(x => x === '')) rows.pop();
+      return rows;
+    }
+
+    // === State ===
+    let headers = [];
+    let data = [];
+    let filtered = [];
+    let sortKey = 0; // column index
+    let sortDir = 1; // 1 asc, -1 desc
+    let page = 1;
+
+    const thead = $('#thead');
+    const tbody = $('#tbody');
+    const q = $('#q');
+    const perSelect = $('#perpage');
+    const countLabel = $('#count');
+    const pageInfo = $('#pageinfo');
+    const prevBtn = $('#prev');
+    const nextBtn = $('#next');
+    const status = $('#status');
+
+    $('#src').textContent = CSV_URL;
+
+    async function load() {
+      try {
+        const res = await fetch(CSV_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const rows = parseCSV(text);
+        if (!rows.length) throw new Error('Empty CSV');
+        headers = rows[0];
+        data = rows.slice(1);
+        filtered = data.slice();
+        buildHeader();
+        update();
+        status.textContent = 'Ready';
+      } catch (e) {
+        status.textContent = 'Error loading CSV';
+        console.error(e);
+      }
+    }
+
+    function buildHeader() {
+      thead.innerHTML = '';
+      const tr = el('tr');
+      headers.forEach((h, idx) => {
+        const th = el('th', { class: 'clickable' });
+        const label = el('span', { text: h || `Col ${idx+1}` });
+        const ind = el('span', { class: 'sort-ind', text: idx === sortKey ? (sortDir === 1 ? '▲' : '▼') : '' });
+        th.append(label, ind);
+        th.addEventListener('click', () => {
+          if (sortKey === idx) sortDir *= -1; else { sortKey = idx; sortDir = 1; }
+          buildHeader();
+          update();
+        });
+        tr.append(th);
+      });
+      thead.append(tr);
+    }
+
+    function update() {
+      // filter
+      const term = q.value.trim().toLowerCase();
+      if (term) {
+        filtered = data.filter(r => r.some(c => (c||'').toString().toLowerCase().includes(term)));
+      } else {
+        filtered = data.slice();
+      }
+
+      // sort (numeric-aware when both sides are numeric-with-$)
+      const num = (v) => {
+        if (v == null) return NaN;
+        const s = String(v).replace(/[$,\s]/g,'');
+        const n = parseFloat(s);
+        return Number.isFinite(n) ? n : NaN;
+      };
+      filtered.sort((a,b) => {
+        const av = a[sortKey] ?? '';
+        const bv = b[sortKey] ?? '';
+        const an = num(av), bn = num(bv);
+        let cmp = 0;
+        if (!Number.isNaN(an) && !Number.isNaN(bn)) cmp = an - bn; else cmp = String(av).localeCompare(String(bv), undefined, {numeric:true});
+        return cmp * sortDir;
+      });
+
+      // paginate
+      const per = parseInt(perSelect.value,10);
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / per));
+      if (page > totalPages) page = totalPages;
+      const start = (page-1) * per;
+      const slice = filtered.slice(start, start + per);
+
+      // render
+      tbody.innerHTML = '';
+      for (const row of slice) {
+        const tr = el('tr');
+        for (const cell of row) {
+          tr.append(el('td', { text: cell }));
+        }
+        tbody.append(tr);
+      }
+
+      countLabel.textContent = total.toLocaleString();
+      pageInfo.textContent = `Page ${page} / ${totalPages}`;
+      prevBtn.disabled = page <= 1;
+      nextBtn.disabled = page >= totalPages;
+    }
+
+    // Events
+    q.addEventListener('input', () => { page = 1; update(); });
+    perSelect.addEventListener('change', () => { page = 1; update(); });
+    prevBtn.addEventListener('click', () => { if (page>1) { page--; update(); } });
+    nextBtn.addEventListener('click', () => { page++; update(); });
+
+    load();
+  </script>
+</body>
+</html>
+
