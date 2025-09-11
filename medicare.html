@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fee Schedules – Side by Side</title>
+  <style>
+    :root { --bg:#0b1220; --panel:#121a2a; --muted:#93a1b1; --fg:#e6edf3; --accent:#8ab4f8; --accent2:#7ee787; --border:#1f2a44; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--fg)}
+    .wrap{max-width:1200px;margin:0 auto;padding:24px}
+    h1{margin:0 0 18px;font-size:26px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+    @media (max-width: 1000px){ .grid{grid-template-columns:1fr} }
+    .card{background:transparent}
+    .card h2{margin:0 0 8px}
+    .sub{color:var(--muted);margin:0 0 12px}
+    .search{width:100%;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--border);color:var(--fg);outline:none;margin-bottom:10px}
+    table{width:100%;border-collapse:collapse;border:1px solid var(--border);background:var(--panel)}
+    thead th{position:sticky;top:0;background:#141f33;z-index:1}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-variant-numeric:tabular-nums}
+    tbody tr:hover{background:rgba(138,180,248,.08)}
+    .clickable{cursor:pointer;user-select:none}
+    .sort-ind{color:var(--accent);font-size:11px;margin-left:6px}
+    .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;color:var(--muted)}
+    .pager{display:flex;gap:6px}
+    .btn{background:var(--panel);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
+    .btn[disabled]{opacity:.45;cursor:not-allowed}
+    .perpage{background:var(--panel);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(126,231,135,.1);color:var(--accent2);border:1px solid rgba(126,231,135,.3);font-size:12px}
+    /* Keep desktop/table layout inside narrow iframes */
+    .wrap{min-width:1100px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Fee Schedules – Side by Side</h1>
+    <div class="grid">
+      <!-- LEFT PANEL -->
+      <section class="card">
+        <h2 id="left-title">CBA</h2>
+        <div class="sub">CSV: <code id="left-src"></code></div>
+        <input id="left-q" class="search" placeholder="Enter HCPCS Code" autocomplete="off" />
+        <table>
+          <thead id="left-thead"></thead>
+          <tbody id="left-tbody"></tbody>
+        </table>
+        <div class="footer">
+          <div>
+            Rows per page:
+            <select id="left-per" class="perpage"><option>25</option><option selected>50</option><option>100</option><option>250</option></select>
+          </div>
+          <div class="pager">
+            <button id="left-prev" class="btn">Prev</button>
+            <span id="left-pageinfo"></span>
+            <button id="left-next" class="btn">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL -->
+      <section class="card">
+        <h2 id="right-title">Rural & Non CBA</h2>
+        <div class="sub">CSV: <code id="right-src"></code></div>
+        <input id="right-q" class="search" placeholder="Enter HCPCS Code" autocomplete="off" />
+        <table>
+          <thead id="right-thead"></thead>
+          <tbody id="right-tbody"></tbody>
+        </table>
+        <div class="footer">
+          <div>
+            Rows per page:
+            <select id="right-per" class="perpage"><option>25</option><option selected>50</option><option>100</option><option>250</option></select>
+          </div>
+          <div class="pager">
+            <button id="right-prev" class="btn">Prev</button>
+            <span id="right-pageinfo"></span>
+            <button id="right-next" class="btn">Next</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ====== CONFIG ======
+    // Edit these four values to switch sources/titles.
+    const LEFT_TITLE = 'CBA';
+    const RIGHT_TITLE = 'Rural & Non CBA';
+    const LEFT_CSV_URL  = 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA_APR2025.csv'; // <-- update if needed
+    const RIGHT_CSV_URL = 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/amerivantage_2025.csv'; // <-- update if needed
+
+    // Also supports query params override: ?left=URL&right=URL&leftTitle=...&rightTitle=...
+    const params = new URLSearchParams(location.search);
+    const csvLeft  = params.get('left') || LEFT_CSV_URL;
+    const csvRight = params.get('right') || RIGHT_CSV_URL;
+    const titleLeft  = params.get('leftTitle')  || LEFT_TITLE;
+    const titleRight = params.get('rightTitle') || RIGHT_TITLE;
+
+    // ====== Utilities ======
+    const $ = (s, r=document) => r.querySelector(s);
+    const el = (t, a={}, kids=[]) => { const n=document.createElement(t); for(const [k,v] of Object.entries(a)){ if(k==='class')n.className=v; else if(k==='text')n.textContent=v; else n.setAttribute(k,v);} for(const c of [].concat(kids)) n.append(c); return n; };
+
+    function parseCSV(text){
+      const rows=[]; let row=[], field='', i=0, inQ=false; const push=()=>{row.push(field); field='';};
+      while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"'; i++;} else inQ=false; } else field+=c; }
+        else { if(c==='"') inQ=true; else if(c===','){ push(); } else if(c==='\n'){ push(); rows.push(row); row=[]; } else if(c==='\r'){} else field+=c; }
+        i++; }
+      if(field!==''||row.length){ push(); rows.push(row); }
+      if(rows.length && rows[rows.length-1].every(x=>x==='')) rows.pop();
+      return rows;
+    }
+
+    function buildTable(rootIds, csvUrl){
+      const thead=$(rootIds.thead), tbody=$(rootIds.tbody), q=$(rootIds.q), perSel=$(rootIds.per), pageInfo=$(rootIds.pageinfo), prev=$(rootIds.prev), next=$(rootIds.next), src=$(rootIds.src);
+      src.textContent = csvUrl;
+      let headers=[], data=[], filtered=[], sortKey=0, sortDir=1, page=1;
+
+      function num(v){ const s=String(v).replace(/[$,\s]/g,''); const n=parseFloat(s); return Number.isFinite(n)?n:NaN; }
+      function renderHead(){ thead.innerHTML=''; const tr=el('tr'); headers.forEach((h,idx)=>{ const th=el('th',{class:'clickable'}); const label=el('span',{text:h||`Col ${idx+1}`}); const ind=el('span',{class:'sort-ind',text: idx===sortKey ? (sortDir===1?'▲':'▼') : ''}); th.append(label,ind); th.addEventListener('click',()=>{ if(sortKey===idx) sortDir*=-1; else {sortKey=idx; sortDir=1;} renderHead(); update(); }); tr.append(th); }); thead.append(tr); }
+      function update(){
+        const term=q.value.trim().toLowerCase();
+        filtered = term ? data.filter(r=>r.some(c=>String(c||'').toLowerCase().includes(term))) : data.slice();
+        filtered.sort((a,b)=>{ const av=a[sortKey]??'', bv=b[sortKey]??''; const an=num(av), bn=num(bv); const cmp = (!Number.isNaN(an)&&!Number.isNaN(bn)) ? (an-bn) : String(av).localeCompare(String(bv),undefined,{numeric:true}); return cmp*sortDir; });
+        const per=parseInt(perSel.value,10); const total=filtered.length; const pages=Math.max(1,Math.ceil(total/per)); if(page>pages) page=pages; const start=(page-1)*per; const slice=filtered.slice(start,start+per);
+        tbody.innerHTML=''; for(const row of slice){ const tr=el('tr'); for(const cell of row){ tr.append(el('td',{text:cell})); } tbody.append(tr); }
+        pageInfo.textContent = `Page ${page} / ${pages} • ${total.toLocaleString()} rows`;
+        prev.disabled = page<=1; next.disabled = page>=pages;
+      }
+
+      q.addEventListener('input',()=>{ page=1; update(); });
+      perSel.addEventListener('change',()=>{ page=1; update(); });
+      prev.addEventListener('click',()=>{ if(page>1){ page--; update(); }});
+      next.addEventListener('click',()=>{ page++; update(); });
+
+      (async()=>{
+        const res = await fetch(csvUrl, {cache:'no-store'}); if(!res.ok) throw new Error('Fetch '+res.status);
+        const text = await res.text(); const rows=parseCSV(text); headers=rows[0]||[]; data=rows.slice(1); renderHead(); update();
+      })().catch(e=>{ console.error(e); thead.innerHTML='<tr><th>Error loading CSV</th></tr>'; });
+    }
+
+    // Apply titles
+    document.getElementById('left-title').textContent = titleLeft;
+    document.getElementById('right-title').textContent = titleRight;
+
+    // Build left and right tables
+    buildTable({ thead:'#left-thead', tbody:'#left-tbody', q:'#left-q', per:'#left-per', pageinfo:'#left-pageinfo', prev:'#left-prev', next:'#left-next', src:'#left-src' }, csvLeft);
+    buildTable({ thead:'#right-thead', tbody:'#right-tbody', q:'#right-q', per:'#right-per', pageinfo:'#right-pageinfo', prev:'#right-prev', next:'#right-next', src:'#right-src' }, csvRight);
+  </script>
+</body>
+</html>
+
