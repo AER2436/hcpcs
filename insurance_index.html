@@ -31,9 +31,12 @@
 
     .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;color:var(--muted)}
     .pager{display:flex;gap:6px}
-    .btn{background:#fff;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
+    .btn{background:#fff;color:#000;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
     .btn[disabled]{opacity:.45;cursor:not-allowed}
-    .perpage{background:#fff;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+    .perpage{background:#fff;color:#000;border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+
+    .debug{margin-top:8px;padding:6px;border:1px dashed #bbb;color:#444;font:12px/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space:pre-wrap}
+    .special-cell{background:#fff3cd;color:#664d03;font-weight:600}
   </style>
 </head>
 <body>
@@ -67,6 +70,8 @@
         <button id="next" class="btn">Next</button>
       </div>
     </div>
+
+    <div id="debug" class="debug"></div>
   </div>
 
   <script>
@@ -74,8 +79,7 @@
 const INSURERS = {
   'CBA (Former CBA APR 2025)': {
     url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA_APR2025.csv',
-    note: 'For RR (rental) rows: <b>Full Payment (RR)</b> = <b>DFW × 10.5</b>.',
-    // Show all columns; add computed Full Payment when Mod=RR
+    note: 'For RR (rental) rows: Default formula = DFW × 10.5. Special HCPCS (K0800–K0899, E1230–E1239) = Fee ÷ 0.15.',
     computed: [ { header: 'Full Payment (RR)', fn: 'full_rr_cba' } ],
   },
 
@@ -83,7 +87,7 @@ const INSURERS = {
     url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
     columns: [0,1,2,4,89,90,113],
     headers: ['HCPCS','Mod','Mod2','CATG','TX (NR)','TX (R)','Description'],
-    note: 'For RR rows, two totals are shown: <b>TX (NR) × 10.5</b> and <b>TX (R) × 10.5</b>.',
+    note: 'For RR (rental) rows: Default formulas = TX (NR) × 10.5 and TX (R) × 10.5. Special HCPCS (K0800–K0899, E1230–E1239) = Fee ÷ 0.15.',
     computed: [
       { header: 'Full Payment TX (NR)', fn: 'full_rr_txnr' },
       { header: 'Full Payment TX (R)',  fn: 'full_rr_txr'  },
@@ -122,7 +126,7 @@ const INSURERS = {
     url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
     columns: [0,1,89,113],
     headers: ['HCPCS','Mod','Allowable','Description'],
-    note:'We are out of network with AETNA, however most plans will pay out of network at Medicare base rates. There is a chance the allowable might be different from what is shown below, but in most cases it will be accurate',
+    note: 'We are out of network with AETNA, however most plans will pay out of network at Medicare base rates. There is a chance the allowable might be different from what is shown below, but in most cases it will be accurate',
   },
 
   'Medicaid (TMHP)': {
@@ -157,9 +161,29 @@ function parseCSV(text){
 function parseMoney(v){ const n = parseFloat(String(v ?? '').replace(/[^0-9.\-]/g,'')); return Number.isFinite(n) ? n : NaN; }
 function fmtMoney(n){ if (Number.isNaN(n)) return ''; return n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
+// ===== Special-case rental formula support =====
+const SPECIAL_CODES = new Set([
+  'K0813','K0814','K0815','K0816',
+  'K0820','K0821','K0822','K0823','K0824','K0825','K0826','K0827','K0828','K0829',
+  'K0835','K0836','K0837','K0838','K0839','K0840','K0841','K0842','K0843',
+  'K0848','K0849','K0850','K0851','K0852','K0853','K0854','K0855',
+  'K0856','K0857','K0858','K0859','K0860','K0861','K0862','K0863','K0864',
+  'K0868','K0869','K0870','K0871','K0877',
+  'K0884','K0885','K0886','K0887','K0888','K0889','K0890','K0891',
+  'K0898','K0899',
+]);
+
+function getExceptionSet(cfg){
+  if (cfg && Array.isArray(cfg.exceptionCodes) && cfg.exceptionCodes.length) {
+    return new Set(cfg.exceptionCodes.map(c => String(c).toUpperCase().trim()));
+  }
+  return SPECIAL_CODES;
+}
+
 // ===== State =====
 let headers=[], data=[], filtered=[], sortKey=0, sortDir=1, page=1;
 let currentHeaderIndex = {};
+let currentExceptionSet = SPECIAL_CODES;
 const planSel = $('#plan');
 const q = $('#q');
 const thead = $('#thead');
@@ -171,11 +195,14 @@ const next = $('#next');
 const count = $('#count');
 const status = $('#status');
 const noteEl = document.getElementById('plan-note');
+const debug = document.getElementById('debug');
 
 function populatePlans(){
   planSel.innerHTML = '';
-  Object.keys(INSURERS).forEach(name => { planSel.append(new Option(name, name)); });
-  if (defaultPlan) { const match = Object.keys(INSURERS).find(k => k.toLowerCase() === defaultPlan.toLowerCase()); if (match) planSel.value = match; }
+  const keys = Object.keys(INSURERS);
+  for (const name of keys){ planSel.append(new Option(name, name)); }
+  if (defaultPlan) { const match = keys.find(k => k.toLowerCase() === defaultPlan.toLowerCase()); if (match) planSel.value = match; }
+  if (debug) debug.textContent = `populatePlans: ${keys.length} plans`;
 }
 
 function num(v){ const s=String(v).replace(/[$,\s]/g,''); const n=parseFloat(s); return Number.isFinite(n)?n:NaN; }
@@ -199,58 +226,97 @@ function findColIndexByName(names){
   return -1;
 }
 
-function projectRow(row, cfg){
-  // Base projection
-  let out = (!cfg.columns || !cfg.headers) ? row.slice() : cfg.columns.map(ci => row[ci] ?? '');
+function isSpecialCode(row){
+  const codeIdx = findColIndexByName(['hcpcs','code']);
+  const code = String(row?.[codeIdx] ?? '').toUpperCase().trim();
+  return code && currentExceptionSet.has(code);
+}
 
-  // Computed columns
+// === CHANGED: return {text, special} so we can highlight cells ===
+function rentalTotalFromBase(baseVal, row){
+  const n = parseMoney(baseVal);
+  if (Number.isNaN(n)) return { text: '', special: false };
+  const special = isSpecialCode(row);
+  const factor  = special ? (1/0.15) : 10.5;
+  return { text: fmtMoney(n * factor), special };
+}
+
+function projectRow(row, cfg){
+  let out = (!cfg.columns || !cfg.headers) ? row.slice() : cfg.columns.map(ci => row[ci] ?? '');
   if (cfg.computed && cfg.computed.length){
     for (const c of cfg.computed){
       let value = '';
+      // We'll push objects for computed cells to support highlighting consistently
       if (c.fn === 'pct'){
         const baseNum = parseMoney(row[c.from]);
-        value = fmtMoney(baseNum * (c.pct ?? 0));
+        value = { text: fmtMoney(baseNum * (c.pct ?? 0)), special: false };
       }
       else if (c.fn === 'full_rr_cba'){
-        // If Mod == 'RR', show DFW * 10.5; else blank
         const modIdx = findColIndexByName(['mod','modifier']);
         const dfwIdx = findColIndexByName(['dfw']);
         if (modIdx >= 0 && dfwIdx >= 0 && String(row[modIdx]).trim().toUpperCase() === 'RR'){
-          value = fmtMoney(parseMoney(row[dfwIdx]) * 10.5);
+          value = rentalTotalFromBase(row[dfwIdx], row);
+        } else {
+          value = { text: '', special: false };
         }
       }
       else if (c.fn === 'full_rr_txnr'){
-        // If Mod == 'RR', TX (NR) * 10.5
         const modIdx = findColIndexByName(['mod','modifier']);
         const txnrIdx = findColIndexByName(['tx (nr)','tx nr','tx_non_rural','non rural']);
         if (modIdx >= 0 && txnrIdx >= 0 && String(row[modIdx]).trim().toUpperCase() === 'RR'){
-          value = fmtMoney(parseMoney(row[txnrIdx]) * 10.5);
+          value = rentalTotalFromBase(row[txnrIdx], row);
+        } else {
+          value = { text: '', special: false };
         }
       }
       else if (c.fn === 'full_rr_txr'){
-        // If Mod == 'RR', TX (R) * 10.5
         const modIdx = findColIndexByName(['mod','modifier']);
         const txrIdx  = findColIndexByName(['tx (r)','tx r','tx_rural','rural']);
         if (modIdx >= 0 && txrIdx >= 0 && String(row[modIdx]).trim().toUpperCase() === 'RR'){
-          value = fmtMoney(parseMoney(row[txrIdx]) * 10.5);
+          value = rentalTotalFromBase(row[txrIdx], row);
+        } else {
+          value = { text: '', special: false };
         }
       }
       out.push(value);
     }
   }
-
   return out;
 }
+
+// Helper so search/sort handle both primitives and {text,special}
+function cellVal(c){ return (c && typeof c === 'object' && 'text' in c) ? c.text : c; }
 
 function update(){
   const cfg = INSURERS[planSel.value];
   const proj = data.map(r => projectRow(r, cfg));
   const term = q.value.trim().toLowerCase();
-  filtered = term ? proj.filter(r => r.some(c => String(c||'').toLowerCase().includes(term))) : proj;
-  filtered.sort((a,b)=>{ const av=a[sortKey]??'', bv=b[sortKey]??''; const an=num(av), bn=num(bv); const cmp = (!Number.isNaN(an)&&!Number.isNaN(bn)) ? (an-bn) : String(av).localeCompare(String(bv),undefined,{numeric:true}); return cmp * sortDir; });
+  filtered = term ? proj.filter(r => r.some(c => String(cellVal(c) || '').toLowerCase().includes(term))) : proj;
+
+  filtered.sort((a,b)=>{
+    const av = cellVal(a[sortKey]) ?? '';
+    const bv = cellVal(b[sortKey]) ?? '';
+    const an = parseFloat(String(av).replace(/[^0-9.\-]/g,'')),
+          bn = parseFloat(String(bv).replace(/[^0-9.\-]/g,''));
+    const cmp = (!Number.isNaN(an)&&!Number.isNaN(bn)) ? (an-bn) : String(av).localeCompare(String(bv),undefined,{numeric:true});
+    return cmp * sortDir;
+  });
+
   const per=parseInt(perSel.value,10); const total=filtered.length; const pages=Math.max(1,Math.ceil(total/per)); if(page>pages) page=pages; const start=(page-1)*per; const slice=filtered.slice(start,start+per);
   tbody.innerHTML='';
-  for(const row of slice){ const tr=el('tr'); for(const cell of row){ tr.append(el('td',{text:cell})); } tbody.append(tr); }
+  for(const row of slice){
+    const tr=el('tr');
+    for(const cell of row){
+      if (cell && typeof cell === 'object' && 'text' in cell){
+        const td = el('td', cell.special ? { class: 'special-cell' } : {});
+        td.textContent = cell.text;
+        tr.append(td);
+      } else {
+        tr.append(el('td',{text:cell}));
+      }
+    }
+    tbody.append(tr);
+  }
   count.textContent = total.toLocaleString();
   pageInfo.textContent = `Page ${page} / ${pages}`;
   prev.disabled = page<=1; next.disabled = page>=pages;
@@ -258,17 +324,19 @@ function update(){
 
 async function loadPlan(){
   const name = planSel.value; const cfg = INSURERS[name]; if (!cfg) return; status.textContent = 'Loading…'; page = 1; sortKey = 0; sortDir = 1; q.value = '';
-  if (cfg.note) { noteEl.hidden = false; noteEl.innerHTML = cfg.note; } else { noteEl.hidden = true; noteEl.innerHTML = ''; }
+  if (cfg.note) { noteEl.hidden = false; noteEl.textContent = cfg.note; } else { noteEl.hidden = true; noteEl.textContent = ''; }
   try {
     const res = await fetch(cfg.url, { cache: 'no-store' }); if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text(); const rows = parseCSV(text); headers = rows[0] || []; data = rows.slice(1);
     currentHeaderIndex = {}; headers.forEach((h,i)=>{ currentHeaderIndex[String(h||'').toLowerCase().trim()] = i; });
+    currentExceptionSet = getExceptionSet(cfg);
     const baseHeaders = (cfg.columns && cfg.headers) ? cfg.headers : headers;
     const compHeaders = (cfg.computed || []).map(c => c.header);
     renderHead([...baseHeaders, ...compHeaders]);
     update(); status.textContent = name;
   } catch (e) {
-    console.error(e); status.textContent = 'Error loading CSV'; thead.innerHTML = '<tr><th>Error</th></tr>'; tbody.innerHTML = ''; count.textContent = '0'; pageInfo.textContent = '';
+    if (debug) debug.textContent = 'loadPlan error: ' + (e && e.message);
+    status.textContent = 'Error loading CSV'; thead.innerHTML = '<tr><th>Error</th></tr>'; tbody.innerHTML = ''; count.textContent = '0'; pageInfo.textContent = '';
   }
 }
 
@@ -280,7 +348,8 @@ next.addEventListener('click', () => { page++; update(); });
 
 populatePlans();
 if (!planSel.value) planSel.selectedIndex = 0;
-loadPlan();
-  </script>
+if (planSel.value) loadPlan();
+</script>
+
 </body>
 </html>
