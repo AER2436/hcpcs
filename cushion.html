@@ -5,242 +5,63 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Cushion Criteria Checker</title>
   <style>
-    :root{
-      --bg:#0b0c10; --card:#121318; --ink:#e8eaf0; --ink-dim:#b8bfcc; --accent:#64d2ff;
-      --ok:#38d39f; --warn:#ffd166; --bad:#ff6b6b; --chip:#1b1e27;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial;color:var(--ink);background:linear-gradient(180deg,#0b0c10,#0e1016 30%,#0b0c10)}
-    .wrap{max-width:880px;margin:0 auto;padding:28px 18px}
-    .card{background:var(--card);border:1px solid #1f2330;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    header{display:flex;gap:12px;align-items:center;margin-bottom:18px}
-    h1{font-size:1.25rem;margin:0}
-    .muted{color:var(--ink-dim);font-size:.9rem}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .search{position:relative;flex:1}
-    input[type="search"]{
-      width:100%;padding:14px 14px 14px 44px;border-radius:12px;border:1px solid #2a3142;background:#0e1118;color:var(--ink);
-      outline:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)
-    }
-    .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.7}
-    .pill{background:var(--chip);border:1px solid #272c3b;color:var(--ink-dim);padding:6px 10px;border-radius:999px;font-size:.8rem}
-    .results{padding:18px}
-    .criteria{display:grid;gap:10px;margin:10px 0 0}
-    .crit{background:#0f1320;border:1px solid #1f2740;padding:12px;border-radius:12px}
-    .badge{display:inline-block;margin-right:6px;padding:2px 8px;border-radius:999px;font-size:.75rem;border:1px solid #2b3246;background:#121622;color:var(--ink-dim)}
-    .bad{border-color:#44252b;background:#1e0e11;color:#ff9ea1}
-    .ok{border-color:#1f3b32;background:#0f1b17;color:#9af3c8}
-    .warn{border-color:#3b331f;background:#1b160e;color:#ffe3a3}
-    .codechip{display:inline-flex;gap:6px;align-items:center;background:#121622;border:1px solid #2b3246;border-radius:10px;padding:6px 8px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-    .small{font-size:.85rem}
-    .grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:10px}
-    footer{margin-top:12px;color:var(--ink-dim);font-size:.8rem}
-    .hint{margin-top:10px}
-    .list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-    .chip{padding:6px 10px;border-radius:999px;background:#0f1320;border:1px solid #29314a;font-size:.8rem}
-    a{color:var(--accent);text-decoration:none}
-    a:hover{text-decoration:underline}
+    body{margin:0;font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial;background:#fff;color:#222}
+    .wrap{padding:12px;max-width:700px;margin:0 auto}
+    input{width:100%;padding:10px 12px;font-size:1rem;border:1px solid #ccc;border-radius:6px;margin-bottom:12px}
+    .result{padding:10px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9}
+    .crit{margin:6px 0;padding:6px;border-left:4px solid #007bff;background:#fff}
+    .muted{color:#666;font-size:.85rem;margin-bottom:8px}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
-      <div style="padding:18px 18px 0">
-        <header>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M5 8h14M5 12h14M5 16h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <div>
-            <h1>Cushion Criteria Checker</h1>
-            <div class="muted">Type an HCPCS cushion code (E2601–E2625) to see the **coverage criteria only**.</div>
-          </div>
-        </header>
-        <div class="row">
-          <div class="search">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <input id="q" type="search" placeholder="Try E2607, E2603, E2613..." autocomplete="off" />
-          </div>
-          <div class="pill">LCD L33312 • PA A52505</div>
-        </div>
-        <div class="hint muted small">No ICD-10 matching. This reflects the 10/01/2025 updates removing diagnosis lists; criteria are clinical/functional:contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3}.</div>
-      </div>
-
-      <div class="results" id="results">
-        <div class="muted">Start typing a code, or pick a category:</div>
-        <div class="grid" id="cats"></div>
-        <div class="list" id="popular"></div>
-      </div>
-
-      <footer class="muted">
-        Source: <a target="_blank" href="#">LCD L33312 (Wheelchair Seating)</a> & <a target="_blank" href="#">Policy Article A52505</a>. Last updated: 2025-10-01.
-      </footer>
-    </div>
+    <div class="muted">Enter an HCPCS code (E2601–E2625)</div>
+    <input id="q" type="text" placeholder="e.g. E2607" />
+    <div id="results"></div>
   </div>
 
 <script>
 const DATA = {
-  // General Use
-  E2601:{name:"General use seat cushion (planar)", cat:"General Use", criteria:[
-    "Beneficiary has a covered manual or power wheelchair with sling/solid seat/back.",
-    "Not covered for POVs or power wheelchairs with captain’s chair."
-  ]},
-  E2602:{name:"General use seat cushion (contoured)", cat:"General Use", criteria:[
-    "Beneficiary has a covered manual or power wheelchair with sling/solid seat/back.",
-    "Not covered for POVs or power wheelchairs with captain’s chair."
-  ]},
-  E2611:{name:"General use back cushion (planar)", cat:"General Use", criteria:[
-    "Beneficiary has a covered wheelchair with sling/solid back.",
-    "Not covered for POVs or power wheelchairs with captain’s chair."
-  ]},
-  E2612:{name:"General use back cushion (contoured)", cat:"General Use", criteria:[
-    "Beneficiary has a covered wheelchair with sling/solid back.",
-    "Not covered for POVs or power wheelchairs with captain’s chair."
-  ]},
-
-  // Skin Protection (non-adjustable & adjustable)
-  E2603:{name:"Skin protection seat cushion, non-adjustable (planar)", cat:"Skin Protection", criteria:[
-    "Beneficiary has a covered manual or power wheelchair with sling/solid seat/back.",
-    "AND one of: current or past pressure ulcer at seating surface; absent/impaired sensation at seating surface; inability to perform a functional weight shift."
-  ]},
-  E2604:{name:"Skin protection seat cushion, non-adjustable (contoured)", cat:"Skin Protection", criteria:[
-    "Beneficiary has a covered manual or power wheelchair with sling/solid seat/back.",
-    "AND one of: current or past pressure ulcer at seating surface; absent/impaired sensation at seating surface; inability to perform a functional weight shift."
-  ]},
-  E2622:{name:"Skin protection seat cushion, adjustable (planar/air/etc.)", cat:"Skin Protection", criteria:[
-    "Beneficiary has a covered manual or power wheelchair with sling/solid seat/back.",
-    "AND one of: current or past pressure ulcer at seating surface; absent/impaired sensation at seating surface; inability to perform a functional weight shift."
-  ]},
-  E2623:{name:"Skin protection seat cushion, adjustable (contoured)", cat:"Skin Protection", criteria:[
-    "Beneficiary has a covered manual or power wheelchair with sling/solid seat/back.",
-    "AND one of: current or past pressure ulcer at seating surface; absent/impaired sensation at seating surface; inability to perform a functional weight shift."
-  ]},
-
-  // Positioning (seat, back, accessories)
-  E2605:{name:"Positioning seat cushion (planar)", cat:"Positioning", criteria:[
-    "Beneficiary has a covered manual or power wheelchair with sling/solid seat/back.",
-    "AND has significant postural asymmetries."
-  ]},
-  E2606:{name:"Positioning seat cushion (contoured)", cat:"Positioning", criteria:[
-    "Beneficiary has a covered manual or power wheelchair with sling/solid seat/back.",
-    "AND has significant postural asymmetries."
-  ]},
-  E2613:{name:"Positioning back cushion (planar posterior)", cat:"Positioning", criteria:[
-    "Beneficiary has a covered wheelchair with sling/solid back.",
-    "AND has significant postural asymmetries."
-  ]},
-  E2614:{name:"Positioning back cushion (contoured posterior)", cat:"Positioning", criteria:[
-    "Beneficiary has a covered wheelchair with sling/solid back.",
-    "AND has significant postural asymmetries."
-  ]},
-  E2615:{name:"Positioning back cushion (posterior-lateral, planar)", cat:"Positioning", criteria:[
-    "Beneficiary has a covered wheelchair with sling/solid back.",
-    "AND has significant postural asymmetries."
-  ]},
-  E2616:{name:"Positioning back cushion (posterior-lateral, contoured)", cat:"Positioning", criteria:[
-    "Beneficiary has a covered wheelchair with sling/solid back.",
-    "AND has significant postural asymmetries."
-  ]},
-  E2620:{name:"Positioning back cushion (planar with lateral supports)", cat:"Positioning", criteria:[
-    "Beneficiary has a covered wheelchair with sling/solid back.",
-    "AND has significant postural asymmetries."
-  ]},
-  E2621:{name:"Positioning back cushion (contoured with lateral supports)", cat:"Positioning", criteria:[
-    "Beneficiary has a covered wheelchair with sling/solid back.",
-    "AND has significant postural asymmetries."
-  ]},
-
-  // Combo (skin protection + positioning)
-  E2607:{name:"Skin protection & positioning seat cushion, non-adjustable (planar)", cat:"Combo", criteria:[
-    "Meets ALL skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).",
-    "AND has significant postural asymmetries."
-  ]},
-  E2608:{name:"Skin protection & positioning seat cushion, non-adjustable (contoured)", cat:"Combo", criteria:[
-    "Meets ALL skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).",
-    "AND has significant postural asymmetries."
-  ]},
-  E2624:{name:"Skin protection & positioning seat cushion, adjustable (planar/air/etc.)", cat:"Combo", criteria:[
-    "Meets ALL skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).",
-    "AND has significant postural asymmetries."
-  ]},
-  E2625:{name:"Skin protection & positioning seat cushion, adjustable (contoured)", cat:"Combo", criteria:[
-    "Meets ALL skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).",
-    "AND has significant postural asymmetries."
-  ]},
-
-  // Custom, Powered
-  E2609:{name:"Custom fabricated seat cushion", cat:"Custom", criteria:[
-    "Beneficiary meets criteria for a prefabricated skin protection or positioning seat cushion.",
-    "AND a comprehensive PT/OT evaluation shows a prefabricated system is insufficient."
-  ]},
-  E2617:{name:"Custom fabricated back cushion", cat:"Custom", criteria:[
-    "Beneficiary meets criteria for a prefabricated positioning back cushion.",
-    "AND a comprehensive PT/OT evaluation shows a prefabricated system is insufficient."
-  ]},
-  E2610:{name:"Powered seat cushion", cat:"Non-covered", criteria:[
-    "Effectiveness not established — not reasonable and necessary (denied)."
-  ]},
-
-  // For completeness (contextual exclusions)
-  E1037:{name:"Transport chair, fixed full-length arms", cat:"Exclusion", criteria:[
-    "Seat/back cushions provided for use with transport chairs are not covered."
-  ]},
-  E1038:{name:"Transport chair, fixed height arms", cat:"Exclusion", criteria:[
-    "Seat/back cushions provided for use with transport chairs are not covered."
-  ]}
+  E2601:["Covered if manual/power wheelchair with sling/solid seat/back.","Not covered for POV or captain’s chair."],
+  E2602:["Covered if manual/power wheelchair with sling/solid seat/back.","Not covered for POV or captain’s chair."],
+  E2611:["Covered if manual/power wheelchair with sling/solid back.","Not covered for POV or captain’s chair."],
+  E2612:["Covered if manual/power wheelchair with sling/solid back.","Not covered for POV or captain’s chair."],
+  E2603:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: pressure ulcer history; impaired sensation; inability to weight shift."],
+  E2604:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: pressure ulcer history; impaired sensation; inability to weight shift."],
+  E2622:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: pressure ulcer history; impaired sensation; inability to weight shift."],
+  E2623:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: pressure ulcer history; impaired sensation; inability to weight shift."],
+  E2605:["Covered if manual/power wheelchair with sling/solid seat/back.","AND has significant postural asymmetries."],
+  E2606:["Covered if manual/power wheelchair with sling/solid seat/back.","AND has significant postural asymmetries."],
+  E2613:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2614:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2615:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2616:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2620:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2621:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2607:["Meets skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).","AND has significant postural asymmetries."],
+  E2608:["Meets skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).","AND has significant postural asymmetries."],
+  E2624:["Meets skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).","AND has significant postural asymmetries."],
+  E2625:["Meets skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).","AND has significant postural asymmetries."],
+  E2609:["Meets criteria for prefab cushion.","PLUS PT/OT eval shows prefab insufficient."],
+  E2617:["Meets criteria for prefab back cushion.","PLUS PT/OT eval shows prefab insufficient."],
+  E2610:["Not reasonable & necessary — denied."],
+  E1037:["Cushions for transport chairs not covered."],
+  E1038:["Cushions for transport chairs not covered."]
 };
 
-const CATS = ["General Use","Skin Protection","Positioning","Combo","Custom","Non-covered","Exclusion"];
-const popular = ["E2607","E2603","E2622","E2605","E2613","E2601","E2610"];
-
-const results = document.getElementById('results');
-const cats = document.getElementById('cats');
-const popularEl = document.getElementById('popular');
-
-function renderHome(){
-  cats.innerHTML = '';
-  CATS.forEach(cat=>{
-    const box = document.createElement('div');
-    box.className='crit';
-    const list = Object.entries(DATA).filter(([k,v])=>v.cat===cat && k.startsWith('E26'));
-    const codes = list.map(([k,v])=>`<span class="chip">${k}</span>`).join(' ');
-    box.innerHTML = `<div class="badge">${cat}</div><div class="small muted">Tap a code below</div><div class="list" style="margin-top:8px">${codes}</div>`;
-    box.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>show(ch.textContent)));
-    cats.appendChild(box);
-  });
-  popularEl.innerHTML = '<span class="muted small">Popular:</span> ' + popular.map(c=>`<span class="chip">${c}</span>`).join(' ');
-  popularEl.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>show(ch.textContent)));
-}
-
 function show(code){
-  code = code.toUpperCase().trim();
-  const item = DATA[code];
-  const title = item ? `${code} — ${item.name}` : `No match for ${code}`;
-  let html = `<div class="codechip"><strong>${code}</strong><span class="muted">${item?item.name:""}</span></div>`;
-  if(!item){
-    html += `<div class="crit" style="margin-top:12px">Try a cushion code between E2601–E2625.</div>`;
-  }else{
-    const badges = {
-      "General Use":"badge",
-      "Skin Protection":"badge ok",
-      "Positioning":"badge ok",
-      "Combo":"badge ok",
-      "Custom":"badge warn",
-      "Non-covered":"badge bad",
-      "Exclusion":"badge bad"
-    };
-    html += `<div class="criteria">` +
-      `<div class="${badges[item.cat]}">${item.cat}</div>` +
-      item.criteria.map(c=>`<div class="crit">${c}</div>`).join('') +
-      `</div>`;
+  code=code.toUpperCase().trim();
+  const res=document.getElementById("results");
+  if(!DATA[code]){
+    res.innerHTML=`<div class="result">No criteria found. Try E2601–E2625.</div>`;
+    return;
   }
-  results.innerHTML = html;
+  res.innerHTML=`<div class="result"><strong>${code}</strong>${DATA[code].map(c=>`<div class="crit">${c}</div>`).join("")}</div>`;
 }
-
-document.getElementById('q').addEventListener('input',e=>{
-  const raw = e.target.value.toUpperCase().replace(/\s+/g,'');
-  if(raw.length>=3){ show(raw); }
-  else{ renderHome(); }
+document.getElementById("q").addEventListener("input",e=>{
+  if(e.target.value.length>=3) show(e.target.value);
+  else document.getElementById("results").innerHTML="";
 });
-
-renderHome();
 </script>
 </body>
 </html>
