@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wheelchair Cushion Code Qualifier</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* Custom scrollbar for textarea for better aesthetics */
+    textarea::-webkit-scrollbar { width: 8px; }
+    textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    textarea::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+    textarea::-webkit-scrollbar-thumb:hover { background: #555; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen flex items-center justify-center p-4 text-slate-100">
+
+  <div class="bg-slate-800 shadow-2xl rounded-xl p-6 md:p-10 w-full max-w-2xl">
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-sky-400">Wheelchair Cushion Qualifier</h1>
+      <p class="text-slate-400 mt-2">Enter HCPCS and Diagnosis codes to check for qualification.</p>
+    </header>
+
+    <form id="qualificationForm" class="space-y-6">
+      <div>
+        <label for="hcpcsCode" class="block text-sm font-medium text-sky-300 mb-1">HCPCS Code</label>
+        <input
+          type="text"
+          id="hcpcsCode"
+          name="hcpcsCode"
+          class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow"
+          placeholder="e.g., E2603"
+          aria-describedby="hcpcsHelp"
+          autocomplete="off"
+        />
+        <p id="hcpcsHelp" class="text-xs text-slate-500 mt-1">Expected pattern like E2603 (soft-validated).</p>
+      </div>
+
+      <div>
+        <label for="diagnosisCodes" class="block text-sm font-medium text-sky-300 mb-1">Diagnosis Codes</label>
+        <textarea
+          id="diagnosisCodes"
+          name="diagnosisCodes"
+          rows="6"
+          class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-shadow"
+          placeholder="Enter codes separated by commas, spaces, or new lines (e.g., L89.130, G83.10)"
+          aria-describedby="dxHelp"
+        ></textarea>
+        <p id="dxHelp" class="text-xs text-slate-500 mt-1">Tip: You can paste multiple codes at once. Inputs are normalized (e.g., l89130 → L89.130).</p>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-3">
+        <button
+          type="submit"
+          class="w-full md:flex-1 bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-0.5"
+        >
+          Check Qualification
+        </button>
+        <button
+          type="button"
+          id="sampleBtn"
+          class="w-full md:w-auto bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold py-3 px-6 rounded-lg border border-slate-600 transition-all"
+          title="Fill with a quick demo set"
+        >
+          Sample data
+        </button>
+        <button
+          type="button"
+          id="clearBtn"
+          class="w-full md:w-auto bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold py-3 px-6 rounded-lg border border-slate-600 transition-all"
+        >
+          Clear
+        </button>
+      </div>
+    </form>
+
+    <div
+      id="resultArea"
+      class="mt-8 p-6 bg-slate-700 rounded-lg shadow-inner min-h-[80px]"
+      aria-live="polite"
+      role="status"
+    >
+      <div class="space-y-2">
+        <p id="resultText" class="text-lg font-medium text-slate-300">Results will appear here.</p>
+        <div id="matchBreakdown" class="text-sm text-slate-400"></div>
+        <div id="unknownList" class="text-sm text-amber-300"></div>
+      </div>
+    </div>
+
+    <div id="debugArea" class="mt-4 p-4 bg-slate-900/50 rounded-lg text-xs text-slate-400 hidden">
+      <h3 class="font-semibold text-slate-300 mb-2">Debugging Info:</h3>
+      <pre id="debugText"></pre>
+    </div>
+  </div>
+
+  <script>
+    // --- Diagnosis Code Sets ---
+    const group1Codes = new Set(['L89.130','L89.131','L89.132','L89.133','L89.134','L89.140','L89.141','L89.142','L89.143','L89.144','L89.150','L89.151','L89.152','L89.153','L89.154','L89.200','L89.201','L89.202','L89.203','L89.204','L89.210','L89.211','L89.212','L89.213','L89.214','L89.220','L89.221','L89.222','L89.223','L89.224','L89.300','L89.301','L89.302','L89.303','L89.304','L89.310','L89.311','L89.312','L89.313','L89.314','L89.320','L89.321','L89.322','L89.323','L89.324','L89.41','L89.42','L89.43','L89.44','L89.45','Z87.2']);
+    const group2Codes = new Set(['B91','E75.00','E75.01','E75.02','E75.09','E75.10','E75.11','E75.19','E75.23','E75.25','E75.27','E75.28','E75.29','E75.4','F03.90','F03.911','F03.918','F03.92','F03.93','F03.94','F03.A11','F03.A18','F03.A2','F03.A3','F03.A4','F03.B11','F03.B18','F03.B2','F03.B3','F03.B4','F03.C11','F03.C18','F03.C2','F03.C3','F03.C4','F84.2','G04.1','G04.82','G04.89','G10','G11.0','G11.10','G11.11','G11.19','G11.2','G11.3','G11.4','G11.8','G11.9','G12.0','G12.1','G12.20','G12.21','G12.23','G12.24','G12.25','G12.29','G12.8','G12.9','G14','G20.A1','G20.A2','G20.B1','G20.B2','G20.C','G21.4','G24.1','G30.0','G30.1','G30.8','G30.9','G31.80','G31.81','G31.82','G31.83','G31.86','G31.89','G32.0','G32.81','G32.89','G35','G36.0','G36.1','G36.8','G36.9','G37.0','G37.1','G37.2','G37.3','G37.4','G37.5','G37.81','G37.89','G37.9','G60.0','G61.0','G70.00','G70.01','G71.00','G71.01','G71.02','G71.031','G71.032','G71.033','G71.0340','G71.0341','G71.0342','G71.0349','G71.035','G71.038','G71.039','G71.09','G71.11','G71.20','G71.21','G71.220','G71.228','G71.29','G72.41','G80.0','G80.1','G80.2','G80.3','G80.4','G80.8','G80.9','G81.00','G81.01','G81.02','G81.03','G81.04','G81.10','G81.11','G81.12','G81.13','G81.14','G81.90','G81.91','G81.92','G81.93','G81.94','G82.20','G82.21','G82.22','G82.50','G82.51','G82.52','G82.53','G82.54','G93.89','G93.9','G94','G95.0','G95.11','G95.19','G99.2','I69.051','I69.052','I69.053','I69.054','I69.059','I69.151','I69.152','I69.153','I69.154','I69.159','I69.251','I69.252','I69.253','I69.254','I69.259','I69.351','I69.352','I69.353','I69.354','I69.359','I69.851','I69.852','I69.853','I69.854','I69.859','I69.951','I69.952','I69.953','I69.954','I69.959','M48.00','M48.01','M48.02','M48.03','M48.04','M48.05','M48.061','M48.062','M48.07','M48.08','M62.3','M62.85','M62.89','Q03.0','Q03.1','Q03.8','Q03.9','Q05.0','Q05.1','Q05.2','Q05.3','Q05.4','Q05.5','Q05.6','Q05.7','Q05.8','Q05.9','Q07.00','Q07.01','Q07.02','Q07.03','Q67.8','Q68.1','Q74.3','Q78.0','Q79.60','Q79.61','Q79.62','Q79.63','Q79.69','Q90.0','Q90.1','Q90.2','Q90.9']);
+    const group3Codes = new Set(['G83.10','G83.11','G83.12','G83.13','G83.14','I69.041','I69.042','I69.043','I69.044','I69.049','I69.141','I69.142','I69.143','I69.144','I69.149','I69.241','I69.242','I69.243','I69.244','I69.249','I69.341','I69.342','I69.343','I69.344','I69.349','I69.841','I69.842','I69.843','I69.844','I69.849','I69.941','I69.942','I69.943','I69.944','I69.949','Q72.01','Q72.02','Q72.03','Q72.11','Q72.12','Q72.13','Q78.0','S78.011A','S78.011D','S78.011S','S78.012A','S78.012D','S78.012S','S78.019A','S78.019D','S78.019S','S78.021A','S78.021D','S78.021S','S78.022A','S78.022D','S78.022S','S78.029A','S78.029D','S78.029S','S78.111A','S78.111D','S78.111S','S78.112A','S78.112D','S78.112S','S78.119A','S78.119D','S78.119S','S78.121A','S78.121D','S78.121S','S78.122A','S78.122D','S78.122S','S78.129A','S78.129D','S78.129S','S78.911A','S78.911D','S78.911S','S78.912A','S78.912D','S78.912S','S78.919A','S78.919D','S78.919S','S78.921A','S78.921D','S78.921S','S78.922A','S78.922D','S78.922S','S78.929A','S78.929D','S78.929S','S88.011A','S88.011D','S88.011S','S88.012A','S88.012D','S88.012S','S88.019A','S88.019D','S88.019S','S88.021A','S88.021D','S88.021S','S88.022A','S88.022D','S88.022S','S88.029A','S88.029D','S88.029S','S88.911A','S88.911D','S88.911S','S88.912A','S88.912D','S88.912S','S88.919A','S88.919D','S88.919S','S88.921A','S88.921D','S88.921S','S88.922A','S88.922D','S88.922S','S88.929A','S88.929D','S88.929S','Z89.511','Z89.512','Z89.519','Z89.611','Z89.612','Z89.619','Z89.621','Z89.622','Z89.629']);
+
+    // --- HCPCS Code Sets ---
+    const hcpcsCategory1 = new Set(['E2603', 'E2604', 'E2622', 'E2623']);
+    const hcpcsCategory2 = new Set(['E0953', 'E0955', 'E0956', 'E0957', 'E0960', 'E2605', 'E2606', 'E2613', 'E2614', 'E2615', 'E2616', 'E2617', 'E2620', 'E2621']);
+    const hcpcsCategory3 = new Set(['E2607', 'E2608', 'E2624', 'E2625']);
+
+    // --- Cached elements ---
+    const resultTextElement = document.getElementById('resultText');
+    const matchBreakdownEl = document.getElementById('matchBreakdown');
+    const unknownListEl = document.getElementById('unknownList');
+    const debugTextElement = document.getElementById('debugText');
+    const debugAreaElement = document.getElementById('debugArea');
+
+    // --- Helpers & normalization ---
+    function normalizeIcd10(raw) {
+      // Uppercase, remove non-alphanumerics, and insert dot after 3rd character if longer than 3
+      const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (!clean) return '';
+      if (clean.length <= 3) return clean;
+      return clean.slice(0, 3) + '.' + clean.slice(3);
+    }
+
+    function tokenizeDx(input) {
+      const tokens = input.split(/[\s,;\n]+/).filter(Boolean);
+      const normalized = tokens.map(normalizeIcd10).filter(Boolean);
+      // De-duplicate while preserving order
+      const seen = new Set();
+      const out = [];
+      for (const c of normalized) {
+        if (!seen.has(c)) { seen.add(c); out.push(c); }
+      }
+      return out;
+    }
+
+    function validHcpcs(h) { return /^E\d{4}$/.test(h); }
+
+    const groupSets = { G1: group1Codes, G2: group2Codes, G3: group3Codes };
+    function whichGroups(code) {
+      const hits = [];
+      if (groupSets.G1.has(code)) hits.push('G1');
+      if (groupSets.G2.has(code)) hits.push('G2');
+      if (groupSets.G3.has(code)) hits.push('G3');
+      return hits;
+    }
+
+    function evaluate(hcpcs, groupsPresent) {
+      const has = g => groupsPresent.has(g);
+      let qualifies = false, reason = '', recognized = true;
+
+      if (hcpcsCategory1.has(hcpcs)) {
+        qualifies = has('G1') || has('G2');
+        reason = qualifies
+          ? `HCPCS ${hcpcs} (Category 1) qualifies with ${has('G1') ? 'Group 1' : ''}${has('G1') && has('G2') ? ' and ' : ''}${has('G2') ? 'Group 2' : ''}.`
+          : `HCPCS ${hcpcs} (Category 1) requires at least one code from Group 1 or Group 2.`;
+      } else if (hcpcsCategory2.has(hcpcs)) {
+        qualifies = has('G2') || has('G3');
+        reason = qualifies
+          ? `HCPCS ${hcpcs} (Category 2) qualifies with ${has('G2') ? 'Group 2' : ''}${has('G2') && has('G3') ? ' and ' : ''}${has('G3') ? 'Group 3' : ''}.`
+          : `HCPCS ${hcpcs} (Category 2) requires at least one code from Group 2 or Group 3.`;
+      } else if (hcpcsCategory3.has(hcpcs)) {
+        qualifies = (has('G1') && has('G3')) || has('G2');
+        reason = qualifies
+          ? (has('G1') && has('G3'))
+            ? `HCPCS ${hcpcs} (Category 3) qualifies with Group 1 AND Group 3 Dx codes.`
+            : `HCPCS ${hcpcs} (Category 3) qualifies with Group 2 Dx code(s).`
+          : `HCPCS ${hcpcs} (Category 3) requires (Group 1 AND Group 3) OR at least one Group 2 code.`;
+      } else {
+        recognized = false;
+        reason = `HCPCS code ${hcpcs} is not recognized or not covered by these rules.`;
+      }
+      return { recognized, qualifies, reason };
+    }
+
+    // --- Main check function ---
+    function checkQualification() {
+      // Reset UI states
+      resultTextElement.classList.remove('text-emerald-400', 'text-red-400', 'text-yellow-400');
+      matchBreakdownEl.textContent = '';
+      unknownListEl.textContent = '';
+      // debugAreaElement.classList.add('hidden');
+      // debugTextElement.textContent = '';
+
+      const hcpcsRaw = document.getElementById('hcpcsCode').value.trim().toUpperCase();
+      const dxRaw = document.getElementById('diagnosisCodes').value.trim();
+
+      if (!hcpcsRaw) {
+        resultTextElement.textContent = 'Please enter an HCPCS code.';
+        resultTextElement.classList.add('text-yellow-400');
+        return;
+      }
+      if (!dxRaw) {
+        resultTextElement.textContent = 'Please enter diagnosis codes.';
+        resultTextElement.classList.add('text-yellow-400');
+        return;
+      }
+
+      const hcpcs = hcpcsRaw.replace(/\s/g, '');
+      const dxCodes = tokenizeDx(dxRaw);
+
+      if (!validHcpcs(hcpcs)) {
+        resultTextElement.textContent = `HCPCS looks unusual (“${hcpcsRaw}”). Expected like E2603. Continuing anyway…`;
+        resultTextElement.classList.add('text-yellow-400');
+      }
+
+      if (dxCodes.length === 0) {
+        resultTextElement.textContent = 'No valid diagnosis codes entered after normalization.';
+        resultTextElement.classList.add('text-yellow-400');
+        return;
+      }
+
+      // Classify each DX
+      const matched = { G1: [], G2: [], G3: [] };
+      const unknown = [];
+      const present = new Set();
+
+      dxCodes.forEach(code => {
+        const hits = whichGroups(code);
+        if (hits.length === 0) {
+          unknown.push(code);
+        } else {
+          hits.forEach(g => { if (!matched[g].includes(code)) matched[g].push(code); present.add(g); });
+        }
+      });
+
+      const { recognized, qualifies, reason } = evaluate(hcpcs, present);
+
+      if (!recognized) {
+        resultTextElement.textContent = reason;
+        resultTextElement.classList.add('text-yellow-400');
+        return;
+      }
+
+      resultTextElement.textContent = (qualifies ? 'QUALIFIES. ' : 'DOES NOT QUALIFY. ') + reason;
+      resultTextElement.classList.add(qualifies ? 'text-emerald-400' : 'text-red-400');
+
+      // Breakdown UI
+      const parts = [];
+      if (matched.G1.length) parts.push(`G1: ${matched.G1.join(', ')}`);
+      if (matched.G2.length) parts.push(`G2: ${matched.G2.join(', ')}`);
+      if (matched.G3.length) parts.push(`G3: ${matched.G3.join(', ')}`);
+      matchBreakdownEl.textContent = parts.length ? `Matches → ${parts.join(' | ')}` : 'No group matches found.';
+      if (unknown.length) unknownListEl.textContent = `Unrecognized / not in sets → ${unknown.join(', ')}`;
+
+      // Optional debugging (toggle by un-hiding the area above)
+      // debugAreaElement.classList.remove('hidden');
+      // debugTextElement.textContent =
+      //   `HCPCS: ${hcpcs}\nEntered Dx: ${dxCodes.join(', ')}\nPresent Groups: ${[...present].join(', ') || 'None'}\nResult: ${qualifies ? 'Qualifies' : 'Does Not Qualify'}\nReason: ${reason}`;
+    }
+
+    // --- Events (non-inline) ---
+    document.getElementById('qualificationForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      checkQualification();
+    });
+
+    document.getElementById('sampleBtn').addEventListener('click', () => {
+      document.getElementById('hcpcsCode').value = 'E2607';
+      document.getElementById('diagnosisCodes').value = 'g83.10, l89130\n Q78-0';
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      document.getElementById('hcpcsCode').value = '';
+      document.getElementById('diagnosisCodes').value = '';
+      resultTextElement.textContent = 'Results will appear here.';
+      resultTextElement.classList.remove('text-emerald-400', 'text-red-400', 'text-yellow-400');
+      matchBreakdownEl.textContent = '';
+      unknownListEl.textContent = '';
+    });
+  </script>
+</body>
+</html>
