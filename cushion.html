@@ -6,61 +6,108 @@
   <title>Cushion Criteria Checker</title>
   <style>
     body{margin:0;font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial;background:#fff;color:#222}
-    .wrap{padding:12px;max-width:700px;margin:0 auto}
-    input{width:100%;padding:10px 12px;font-size:1rem;border:1px solid #ccc;border-radius:6px;margin-bottom:12px}
-    .result{padding:10px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9}
-    .crit{margin:6px 0;padding:6px;border-left:4px solid #007bff;background:#fff}
+    .wrap{padding:12px;max-width:720px;margin:0 auto}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    input,select{padding:10px 12px;font-size:1rem;border:1px solid #ccc;border-radius:6px;background:#fff;color:#222}
+    input{flex:1;min-width:220px}
+    select{min-width:180px}
     .muted{color:#666;font-size:.85rem;margin-bottom:8px}
+    .result{padding:10px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9;margin-top:12px}
+    .crit{margin:6px 0;padding:6px;border-left:4px solid #007bff;background:#fff}
+    .src{margin-top:8px;color:#666;font-size:.8rem}
+    .src a{color:#3366cc;text-decoration:none}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="muted">Enter an HCPCS code (E2601–E2625)</div>
-    <input id="q" type="text" placeholder="e.g. E2607" />
+    <div class="muted">Enter or pick an HCPCS cushion code (E2601–E2625)</div>
+    <div class="row">
+      <input id="q" type="text" placeholder="e.g. E2607" list="hcpcs" autocomplete="off" />
+      <select id="sel"></select>
+    </div>
+    <datalist id="hcpcs"></datalist>
     <div id="results"></div>
   </div>
 
 <script>
 const DATA = {
+  // General Use
   E2601:["Covered if manual/power wheelchair with sling/solid seat/back.","Not covered for POV or captain’s chair."],
   E2602:["Covered if manual/power wheelchair with sling/solid seat/back.","Not covered for POV or captain’s chair."],
-  E2611:["Covered if manual/power wheelchair with sling/solid back.","Not covered for POV or captain’s chair."],
-  E2612:["Covered if manual/power wheelchair with sling/solid back.","Not covered for POV or captain’s chair."],
-  E2603:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: pressure ulcer history; impaired sensation; inability to weight shift."],
-  E2604:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: pressure ulcer history; impaired sensation; inability to weight shift."],
-  E2622:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: pressure ulcer history; impaired sensation; inability to weight shift."],
-  E2623:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: pressure ulcer history; impaired sensation; inability to weight shift."],
+  E2611:["Covered if wheelchair with sling/solid back.","Not covered for POV or captain’s chair."],
+  E2612:["Covered if wheelchair with sling/solid back.","Not covered for POV or captain’s chair."],
+
+  // Skin Protection
+  E2603:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: current/past pressure ulcer at seating surface; impaired/absent sensation; inability to perform functional weight shift."],
+  E2604:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: current/past pressure ulcer at seating surface; impaired/absent sensation; inability to perform functional weight shift."],
+  E2622:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: current/past pressure ulcer at seating surface; impaired/absent sensation; inability to perform functional weight shift."],
+  E2623:["Covered if manual/power wheelchair with sling/solid seat/back.","AND one of: current/past pressure ulcer at seating surface; impaired/absent sensation; inability to perform functional weight shift."],
+
+  // Positioning (seat, back, accessories)
   E2605:["Covered if manual/power wheelchair with sling/solid seat/back.","AND has significant postural asymmetries."],
   E2606:["Covered if manual/power wheelchair with sling/solid seat/back.","AND has significant postural asymmetries."],
-  E2613:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
-  E2614:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
-  E2615:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
-  E2616:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
-  E2620:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
-  E2621:["Covered if manual/power wheelchair with sling/solid back.","AND has significant postural asymmetries."],
-  E2607:["Meets skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).","AND has significant postural asymmetries."],
-  E2608:["Meets skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).","AND has significant postural asymmetries."],
-  E2624:["Meets skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).","AND has significant postural asymmetries."],
-  E2625:["Meets skin protection criteria (ulcer history OR impaired sensation OR inability to weight shift).","AND has significant postural asymmetries."],
-  E2609:["Meets criteria for prefab cushion.","PLUS PT/OT eval shows prefab insufficient."],
-  E2617:["Meets criteria for prefab back cushion.","PLUS PT/OT eval shows prefab insufficient."],
+  E2613:["Covered if wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2614:["Covered if wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2615:["Covered if wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2616:["Covered if wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2620:["Covered if wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+  E2621:["Covered if wheelchair with sling/solid back.","AND has significant postural asymmetries."],
+
+  // Combo (skin protection + positioning)
+  E2607:["Meets skin protection criteria (ulcer history OR impaired/absent sensation OR inability to weight shift).","AND has significant postural asymmetries."],
+  E2608:["Meets skin protection criteria (ulcer history OR impaired/absent sensation OR inability to weight shift).","AND has significant postural asymmetries."],
+  E2624:["Meets skin protection criteria (ulcer history OR impaired/absent sensation OR inability to weight shift).","AND has significant postural asymmetries."],
+  E2625:["Meets skin protection criteria (ulcer history OR impaired/absent sensation OR inability to weight shift).","AND has significant postural asymmetries."],
+
+  // Custom / Powered / Exclusions
+  E2609:["Meets criteria for prefabricated skin protection or positioning seat cushion.","PLUS PT/OT evaluation shows prefab system insufficient."],
+  E2617:["Meets criteria for prefabricated positioning back cushion.","PLUS PT/OT evaluation shows prefab system insufficient."],
   E2610:["Not reasonable & necessary — denied."],
+  // contextual exclusions for transport chairs
   E1037:["Cushions for transport chairs not covered."],
   E1038:["Cushions for transport chairs not covered."]
 };
 
-function show(code){
-  code=code.toUpperCase().trim();
-  const res=document.getElementById("results");
-  if(!DATA[code]){
-    res.innerHTML=`<div class="result">No criteria found. Try E2601–E2625.</div>`;
+// Build dropdown + datalist
+const CODES = Object.keys(DATA).filter(k=>/^E26\d{2}$/.test(k)); // show only cushion family in selectors
+const sel = document.getElementById('sel');
+const dl  = document.getElementById('hcpcs');
+CODES.forEach(code=>{
+  const o=document.createElement('option'); o.value=code; o.textContent=code; sel.appendChild(o);
+  const d=document.createElement('option'); d.value=code; dl.appendChild(d);
+});
+sel.insertAdjacentHTML('afterbegin','<option value="" selected>Select code…</option>');
+
+function render(code){
+  const res = document.getElementById('results');
+  code = (code||'').toUpperCase().trim();
+  if(!code || !DATA[code]){
+    res.innerHTML = '';
     return;
   }
-  res.innerHTML=`<div class="result"><strong>${code}</strong>${DATA[code].map(c=>`<div class="crit">${c}</div>`).join("")}</div>`;
+  res.innerHTML = `
+    <div class="result">
+      <strong>${code}</strong>
+      ${DATA[code].map(c=>`<div class="crit">${c}</div>`).join('')}
+      <div class="src">Source: LCD L33312 (Wheelchair Seating) & Policy Article A52505 — criteria only (no ICD-10 matching, effective 10/01/2025).</div>
+    </div>`;
 }
-document.getElementById("q").addEventListener("input",e=>{
-  if(e.target.value.length>=3) show(e.target.value);
-  else document.getElementById("results").innerHTML="";
+
+// typing
+const q = document.getElementById('q');
+q.addEventListener('input', e=>{
+  const v = e.target.value;
+  // keep dropdown in sync if matches a known code
+  if (DATA[v.toUpperCase()]) sel.value = v.toUpperCase();
+  else sel.value = '';
+  if (v.length >= 3) render(v); else render('');
+});
+// dropdown
+sel.addEventListener('change', e=>{
+  const v = e.target.value;
+  if (!v) { render(''); return; }
+  q.value = v;
+  render(v);
 });
 </script>
 </body>
