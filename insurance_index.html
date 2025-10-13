@@ -78,15 +78,13 @@
 // ===== CONFIG: url, columns, headers, note, computed =====
 const INSURERS = {
   'CBA (Former CBA APR 2025)': {
-    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA_APR2025.csv',
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA.csv',
     note: 'For RR (rental) rows: Default formula = DFW × 10.5. Special HCPCS (K0800–K0899, E1230–E1239) = Fee ÷ 0.15.',
     computed: [ { header: 'Full Payment (RR)', fn: 'full_rr_cba' } ],
   },
 
   'Rural & Non CBA (custom view)': {
-    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
-    columns: [0,1,2,4,89,90,113],
-    headers: ['HCPCS','Mod','Mod2','CATG','TX (NR)','TX (R)','Description'],
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
     note: 'For RR (rental) rows: Default formulas = TX (NR) × 10.5 and TX (R) × 10.5. Special HCPCS (K0800–K0899, E1230–E1239) = Fee ÷ 0.15.',
     computed: [
       { header: 'Full Payment TX (NR)', fn: 'full_rr_txnr' },
@@ -105,26 +103,26 @@ const INSURERS = {
   },
 
   'UHC': {
-    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
-    columns: [0,1,89,113],
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
+    columns: [0,1,4,6],
     headers: ['HCPCS','Mod','TX (NR)','Description'],
     note: 'We are out of network with United Healthcare, however most plans will pay out of network at Medicare base rates. There is a chance the allowable might be different from what is shown below, but in most cases it will be accurate.',
   },
 
   'CIGNA': {
-    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
-    columns: [0,1,89,113],
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
+    columns: [0,1,4,6],
     headers: ['HCPCS','Mod','TX (NR)','Description'],
     computed: [
-      { header: 'Cigna 60%', from: 89, fn: 'pct', pct: 0.60 },
-      { header: 'Cigna 70%', from: 89, fn: 'pct', pct: 0.70 },
+      { header: 'Cigna 60%', from: 4, fn: 'pct', pct: 0.60 },
+      { header: 'Cigna 70%', from: 4, fn: 'pct', pct: 0.70 },
     ],
     note: 'CIGNA pays 60% of the Medicare unajusted rate, except for Power Mobility which is 70%. Choose the appropriate one per item.',
   },
 
   'AETNA': {
-    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS25_APR25.csv',
-    columns: [0,1,89,113],
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
+    columns: [0,1,4,6],
     headers: ['HCPCS','Mod','Allowable','Description'],
     note: 'We are out of network with AETNA, however most plans will pay out of network at Medicare base rates. There is a chance the allowable might be different from what is shown below, but in most cases it will be accurate',
   },
