@@ -99,6 +99,7 @@
     .note{margin-top:22px;font-size:.92rem;color:var(--cme-muted)}
   </style>
 </head>
+  
 <body>
   <div class="container">
 
@@ -126,7 +127,8 @@
           Register <small>Free, takes minutes</small>
         </a>
         <!-- NEW FAQ BUTTON -->
-        <a class="btn btn-primary" href="#faq" style="background:#0e4f7f;color:#fff;">FAQ</a>
+        <a id="faqLink" class="btn btn-primary" href="#faq" style="background:#0e4f7f;color:#fff;">FAQ</a>
+
       </div>
 
       <div class="grid">
@@ -229,6 +231,27 @@
     </section>
 
   </div>
+  <script>
+  // Enhance anchor jump with smooth scroll, but still work if JS is blocked
+  (function () {
+    var link = document.getElementById('faqLink');
+    var target = document.getElementById('faq');
+    if (!link || !target) return;
+
+    link.addEventListener('click', function (e) {
+      // If the element exists in this same document, do smooth scroll
+      if (typeof target.scrollIntoView === 'function') {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Also update the hash so the URL reflects the section
+        if (history.pushState) history.pushState(null, '', '#faq');
+        else location.hash = 'faq';
+      }
+      // Otherwise, let the normal anchor behavior try (no preventDefault)
+    });
+  })();
+</script>
+
 </body>
 </html>
 
