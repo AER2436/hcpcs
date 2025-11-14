@@ -251,7 +251,7 @@ function projectRow(row, cfg){
       }
       else if (c.fn === 'full_rr_cba'){
         const modIdx = findColIndexByName(['mod','modifier']);
-        const dfwIdx = findColIndexByName(['dfw']);
+        const dfwIdx = findColIndexByName(['dallas', 'dfw']);
         if (modIdx >= 0 && dfwIdx >= 0 && String(row[modIdx]).trim().toUpperCase() === 'RR'){
           value = rentalTotalFromBase(row[dfwIdx], row);
         } else {
