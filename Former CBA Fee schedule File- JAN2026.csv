@@ -1,0 +1,618 @@
+HCPCS,Mod,Mod2,CATG,Dallas,Description
+A4557,KG,,SU,10.27,"Lead wires, pair"
+A4595,KG,,SU,12.34,Tens suppl 2 lead per month
+A4604,NU,,IN,47.88,Tubing with heating element
+A4640,NU,,IN,56.5,Alternating pressure pad
+A4640,RR,,IN,5.64,Alternating pressure pad
+A4640,UE,,IN,42.36,Alternating pressure pad
+A6550,,,SU,31.79,Neg pres wound ther drsg set
+A7000,NU,KG,IN,10.27,Disposable canister for pump
+A7003,NU,,IN,1.92,Nebulizer administration set
+A7004,NU,,IN,1.59,Disposable nebulizer sml vol
+A7005,NU,KG,IN,20.53,Nondisposable nebulizer set
+A7006,NU,,IN,10.61,Filtered nebulizer admin set
+A7007,NU,,IN,5.05,Lg vol nebulizer disposable
+A7010,NU,,IN,22.09,Disposable corrugated tubing
+A7012,NU,,IN,4.13,Nebulizer water collec devic
+A7013,NU,,IN,0.76,Disposable compressor filter
+A7014,NU,,IN,4.6,Compressor nondispos filter
+A7015,NU,,IN,1.92,Aerosol mask used w nebulize
+A7017,NU,,IN,168.13,Nebulizer not used w oxygen
+A7017,RR,,IN,16.81,Nebulizer not used w oxygen
+A7017,UE,,IN,126.12,Nebulizer not used w oxygen
+A7018,,,SU,0.4,Water distilled w/nebulizer
+A7027,NU,,IN,155.88,Combination oral/nasal mask
+A7028,NU,,IN,44.94,Repl oral cushion combo mask
+A7029,NU,,IN,19.76,Repl nasal pillow comb mask
+A7030,NU,,IN,115.07,Cpap full face mask
+A7031,NU,,IN,44.33,Replacement facemask interfa
+A7032,NU,,IN,24.94,Replacement nasal cushion
+A7033,NU,,IN,20.53,Replacement nasal pillows
+A7034,NU,,IN,73.22,Nasal application device
+A7035,NU,,IN,22.14,Pos airway press headgear
+A7036,NU,,IN,13.36,Pos airway press chinstrap
+A7037,NU,,IN,16.18,Pos airway pressure tubing
+A7038,NU,,IN,2.86,Pos airway pressure filter
+A7039,NU,,IN,7.85,"Filter, non disposable w pap"
+A7044,NU,,IN,104.68,Pap oral interface
+A7045,NU,,IN,15.05,Repl exhalation port for pap
+A7045,RR,,IN,1.5,Repl exhalation port for pap
+A7045,UE,,IN,11.28,Repl exhalation port for pap
+A7046,NU,,IN,16.69,"Repl water chamber, pap dev"
+B4034,,,,3.86,Enter feed supkit syr by day
+B4035,,,,6.8,Enteral feed supp pump per d
+B4036,,,,5.35,Enteral feed sup kit grav by
+B4081,,,,18.94,Enteral ng tubing w/ stylet
+B4082,,,,13.34,Enteral ng tubing w/o stylet
+B4083,,,,2.16,Enteral stomach tube levine
+B4087,,,,33.98,"Gastro/jejuno tube, std"
+B4088,,,,37.76,"Gastro/jejuno tube, low-pro"
+B4149,,,,1.3,Ef blenderized foods
+B4150,,,,0.48,Ef complet w/intact nutrient
+B4152,,,,0.4,Ef calorie dense>/=1.5kcal
+B4153,,,,1.62,Ef hydrolyzed/amino acids
+B4154,,,,0.89,Ef spec metabolic noninherit
+B4155,,,,0.89,Ef incomplete/modular
+B9002,MS,,,40.16,Enter nutr inf pump any type
+B9002,NU,,,803.16,Enter nutr inf pump any type
+B9002,RR,,,80.32,Enter nutr inf pump any type
+B9002,UE,,,602.38,Enter nutr inf pump any type
+E0130,NU,,IN,59.06,Walker rigid adjust/fixed ht
+E0130,RR,,IN,5.91,Walker rigid adjust/fixed ht
+E0130,UE,,IN,44.3,Walker rigid adjust/fixed ht
+E0135,NU,,IN,53.99,Walker folding adjust/fixed
+E0135,RR,,IN,5.41,Walker folding adjust/fixed
+E0135,UE,,IN,40.5,Walker folding adjust/fixed
+E0140,RR,,CR,35.13,Walker w trunk support
+E0141,NU,,IN,97.79,Rigid wheeled walker adj/fix
+E0141,RR,,IN,9.79,Rigid wheeled walker adj/fix
+E0141,UE,,IN,73.34,Rigid wheeled walker adj/fix
+E0143,NU,,IN,60.35,Walker folding wheeled w/o s
+E0143,RR,,IN,6.03,Walker folding wheeled w/o s
+E0143,UE,,IN,45.26,Walker folding wheeled w/o s
+E0148,NU,,IN,101.52,Heavyduty walker no wheels
+E0148,RR,,IN,10.16,Heavyduty walker no wheels
+E0148,UE,,IN,76.14,Heavyduty walker no wheels
+E0149,RR,,CR,14.51,Heavy duty wheeled walker
+E0154,NU,,IN,59.32,Walker platform attachment
+E0154,RR,,IN,5.93,Walker platform attachment
+E0154,UE,,IN,44.49,Walker platform attachment
+E0155,NU,,IN,23.57,"Walker wheel attachment,pair"
+E0155,RR,,IN,2.35,"Walker wheel attachment,pair"
+E0155,UE,,IN,17.67,"Walker wheel attachment,pair"
+E0156,NU,KG,IN,18.02,Walker seat attachment
+E0156,RR,KG,IN,1.8,Walker seat attachment
+E0156,UE,KG,IN,13.53,Walker seat attachment
+E0157,NU,,IN,64.2,Walker crutch attachment
+E0157,RR,,IN,6.41,Walker crutch attachment
+E0157,UE,,IN,48.15,Walker crutch attachment
+E0158,NU,,IN,25.55,Walker leg extenders set of4
+E0158,RR,,IN,2.56,Walker leg extenders set of4
+E0158,UE,,IN,19.17,Walker leg extenders set of4
+E0159,NU,,IN,16.84,Brake for wheeled walker
+E0159,RR,,IN,1.68,Brake for wheeled walker
+E0159,UE,,IN,12.64,Brake for wheeled walker
+E0160,NU,,IN,32.07,Sitz type bath or equipment
+E0160,RR,,IN,3.22,Sitz type bath or equipment
+E0160,UE,,IN,24.07,Sitz type bath or equipment
+E0161,NU,,IN,28.9,Sitz bath/equipment w/faucet
+E0161,RR,,IN,2.9,Sitz bath/equipment w/faucet
+E0161,UE,,IN,21.67,Sitz bath/equipment w/faucet
+E0163,NU,,IN,65.73,Commode chair with fixed arm
+E0163,RR,,IN,6.58,Commode chair with fixed arm
+E0163,UE,,IN,49.31,Commode chair with fixed arm
+E0165,RR,,CR,14.61,Commode chair with detacharm
+E0167,NU,,IN,12.61,Commode chair pail or pan
+E0167,RR,,IN,1.24,Commode chair pail or pan
+E0167,UE,,IN,9.45,Commode chair pail or pan
+E0168,NU,,IN,139.14,Heavyduty/wide commode chair
+E0168,RR,,IN,13.92,Heavyduty/wide commode chair
+E0168,UE,,IN,104.35,Heavyduty/wide commode chair
+E0170,RR,,CR,190.21,Commode chair electric
+E0171,RR,,CR,35.86,Commode chair non-electric
+E0181,RR,,CR,18.66,Press pad alternating w/ pum
+E0182,RR,,CR,19.79,"Replace pump, alt press pad"
+E0184,NU,,IN,180.56,Dry pressure mattress
+E0184,RR,,IN,18.06,Dry pressure mattress
+E0184,UE,,IN,135.43,Dry pressure mattress
+E0185,NU,,IN,197.36,Gel pressure mattress pad
+E0185,RR,,IN,19.74,Gel pressure mattress pad
+E0185,UE,,IN,148.02,Gel pressure mattress pad
+E0186,RR,,CR,22.78,Air pressure mattress
+E0187,RR,,CR,26.61,Water pressure mattress
+E0188,NU,,IN,29.75,Synthetic sheepskin pad
+E0188,RR,,IN,2.97,Synthetic sheepskin pad
+E0188,UE,,IN,22.31,Synthetic sheepskin pad
+E0189,NU,,IN,71.24,Lambswool sheepskin pad
+E0189,RR,,IN,7.12,Lambswool sheepskin pad
+E0189,UE,,IN,53.43,Lambswool sheepskin pad
+E0193,RR,,CR,796.13,Powered air flotation bed
+E0196,RR,,CR,37.25,Gel pressure mattress
+E0197,RR,,CR,19.66,Air pressure pad for mattres
+E0199,NU,,IN,38.34,Dry pressure pad for mattres
+E0199,RR,,IN,3.84,Dry pressure pad for mattres
+E0199,UE,,IN,28.76,Dry pressure pad for mattres
+E0250,RR,,CR,77.63,Hosp bed fixed ht w/ mattres
+E0251,RR,,CR,74.95,Hosp bed fixd ht w/o mattres
+E0255,RR,,CR,83.45,Hospital bed var ht w/ mattr
+E0256,RR,,CR,75.48,Hospital bed var ht w/o matt
+E0260,RR,,CR,76.01,Hosp bed semi-electr w/ matt
+E0261,RR,,CR,76.87,Hosp bed semi-electr w/o mat
+E0271,NU,,IN,140.76,Mattress innerspring
+E0271,RR,,IN,14.07,Mattress innerspring
+E0271,UE,,IN,105.57,Mattress innerspring
+E0272,NU,,IN,148.9,Mattress foam rubber
+E0272,RR,,IN,14.9,Mattress foam rubber
+E0272,UE,,IN,111.67,Mattress foam rubber
+E0275,NU,,IN,17.25,Bed pan standard
+E0275,RR,,IN,1.72,Bed pan standard
+E0275,UE,,IN,12.92,Bed pan standard
+E0276,NU,,IN,15.42,Bed pan fracture
+E0276,RR,,IN,1.54,Bed pan fracture
+E0276,UE,,IN,11.59,Bed pan fracture
+E0277,RR,,CR,258.27,Powered pres-redu air mattrs
+E0280,NU,,IN,44.5,Bed cradle
+E0280,RR,,IN,4.45,Bed cradle
+E0280,UE,,IN,33.36,Bed cradle
+E0290,RR,,CR,74.97,Hosp bed fx ht w/o rails w/m
+E0291,RR,,CR,59.82,Hosp bed fx ht w/o rail w/o
+E0292,RR,,CR,84.52,Hosp bed var ht no sr w/matt
+E0293,RR,,CR,74.8,Hosp bed var ht no sr no mat
+E0294,RR,,CR,83.63,Hosp bed semi-elect w/ mattr
+E0295,RR,,CR,81.92,Hosp bed semi-elect w/o matt
+E0301,RR,,CR,209.16,"Hd hosp bed, 350-600 lbs"
+E0302,RR,,CR,541.93,Ex hd hosp bed > 600 lbs
+E0303,RR,,CR,217.51,Hosp bed hvy dty xtra wide
+E0304,RR,,CR,558.16,Hosp bed xtra hvy dty x wide
+E0305,RR,,CR,12.13,Rails bed side half length
+E0310,NU,,IN,125.89,Rails bed side full length
+E0310,RR,,IN,12.6,Rails bed side full length
+E0310,UE,,IN,94.42,Rails bed side full length
+E0325,NU,,IN,11.99,Urinal male jug-type
+E0325,RR,,IN,1.19,Urinal male jug-type
+E0325,UE,,IN,9.01,Urinal male jug-type
+E0326,NU,,IN,12.36,Urinal female jug-type
+E0326,RR,,IN,1.22,Urinal female jug-type
+E0326,UE,,IN,9.26,Urinal female jug-type
+E0371,RR,,CR,349.3,Nonpower mattress overlay
+E0372,RR,,CR,306.63,Powered air mattress overlay
+E0373,RR,,CR,416.18,Nonpowered pressure mattress
+E0424,RR,,OX,98.22,Stationary compressed gas 02
+E0424,RR,QB,OX,98.22,Stationary compressed gas 02
+E0424,RR,QF,OX,98.22,Stationary compressed gas 02
+E0431,RR,,OX,22.64,Portable gaseous 02
+E0431,RR,QB,OX,49.11,Portable gaseous 02
+E0431,RR,QF,OX,49.11,Portable gaseous 02
+E0433,RR,,OX,46.87,Portable liquid oxygen sys
+E0433,RR,QB,OX,49.11,Portable liquid oxygen sys
+E0433,RR,QF,OX,49.11,Portable liquid oxygen sys
+E0434,RR,,OX,46.87,Portable liquid 02
+E0434,RR,QB,OX,49.11,Portable liquid 02
+E0434,RR,QF,OX,49.11,Portable liquid 02
+E0439,RR,,OX,98.22,Stationary liquid 02
+E0439,RR,QB,OX,98.22,Stationary liquid 02
+E0439,RR,QF,OX,98.22,Stationary liquid 02
+E0441,,,OX,69.59,"Stationary o2 contents, gas"
+E0442,,,OX,69.59,"Stationary o2 contents, liq"
+E0443,,,OX,66.78,"Portable 02 contents, gas"
+E0444,,,OX,66.78,"Portable 02 contents, liquid"
+E0447,,,OX,100.16,"Port o2 cont, liq over 4 lpm"
+E0470,RR,,CR,145.35,Rad w/o backup non-inv intfc
+E0471,RR,,CR,371.71,Rad w/backup non inv intrfc
+E0472,RR,,CR,461.96,Rad w backup invasive intrfc
+E0561,NU,,IN,91.17,Humidifier nonheated w pap
+E0561,RR,,IN,9.12,Humidifier nonheated w pap
+E0561,UE,,IN,68.37,Humidifier nonheated w pap
+E0562,NU,,IN,182.35,Humidifier heated used w pap
+E0562,RR,,IN,18.24,Humidifier heated used w pap
+E0562,UE,,IN,136.74,Humidifier heated used w pap
+E0565,RR,,CR,60.6,Compressor air power source
+E0570,RR,,CR,10.15,Nebulizer with compression
+E0572,RR,,CR,43.85,Aerosol compressor adjust pr
+E0585,RR,,CR,40.96,Nebulizer w/ compressor & he
+E0601,RR,,CR,53.94,Cont airway pressure device
+E0621,NU,,IN,102.04,Patient lift sling or seat
+E0621,RR,,IN,10.2,Patient lift sling or seat
+E0621,UE,,IN,76.53,Patient lift sling or seat
+E0627,NU,,IN,287.31,"Seat lift mech, electric any"
+E0627,RR,,IN,28.74,"Seat lift mech, electric any"
+E0627,UE,,IN,215.48,"Seat lift mech, electric any"
+E0629,NU,,IN,309.13,"Seat lift mech, non-electric"
+E0629,RR,,IN,30.92,"Seat lift mech, non-electric"
+E0629,UE,,IN,231.84,"Seat lift mech, non-electric"
+E0630,RR,,CR,70.61,Patient lift hydraulic
+E0635,RR,,CR,134.88,Patient lift electric
+E0636,RR,,CR,1237.05,Pt support & positioning sys
+E0705,NU,,IN,51.52,Transfer device
+E0705,RR,,IN,5.14,Transfer device
+E0705,UE,,IN,38.65,Transfer device
+E0720,NU,,TE,102.53,Tens two lead
+E0730,NU,,TE,102.53,Tens four lead
+E0731,NU,KG,IN,109.9,Conductive garment for tens/
+E0776,NU,BA,,64.94,Iv pole
+E0776,RR,BA,,6.5,Iv pole
+E0776,UE,BA,,48.71,Iv pole
+E0910,RR,,CR,13.55,Trapeze bar attached to bed
+E0911,RR,,CR,50.61,Hd trapeze bar attach to bed
+E0912,RR,,CR,95.16,Hd trapeze bar free standing
+E0940,RR,,CR,25.32,Trapeze bar free standing
+E0950,NU,,IN,89.87,Tray
+E0950,RR,,IN,9,Tray
+E0950,UE,,IN,67.4,Tray
+E0951,NU,,IN,14.02,Loop heel
+E0951,RR,,IN,1.41,Loop heel
+E0951,UE,,IN,10.52,Loop heel
+E0955,RR,,CR,16.69,Cushioned headrest
+E0956,NU,,IN,92.44,W/c lateral trunk/hip suppor
+E0956,RR,,IN,9.24,W/c lateral trunk/hip suppor
+E0956,UE,,IN,69.34,W/c lateral trunk/hip suppor
+E0957,NU,,IN,131.17,W/c medial thigh support
+E0957,RR,,IN,13.13,W/c medial thigh support
+E0957,UE,,IN,98.39,W/c medial thigh support
+E0958,RR,,CR,44.94,Whlchr att- conv 1 arm drive
+E0959,NU,,IN,50.69,Amputee adapter
+E0959,RR,,IN,5.08,Amputee adapter
+E0959,UE,,IN,38.02,Amputee adapter
+E0960,NU,,IN,86.62,W/c shoulder harness/straps
+E0960,RR,,IN,8.68,W/c shoulder harness/straps
+E0960,UE,,IN,64.97,W/c shoulder harness/straps
+E0961,NU,,IN,23.18,Wheelchair brake extension
+E0961,RR,,IN,2.32,Wheelchair brake extension
+E0961,UE,,IN,17.39,Wheelchair brake extension
+E0966,NU,,IN,78.77,Wheelchair head rest extensi
+E0966,RR,,IN,7.86,Wheelchair head rest extensi
+E0966,UE,,IN,59.07,Wheelchair head rest extensi
+E0967,NU,,IN,79.53,Man wc rim/projection rep ea
+E0967,RR,,IN,7.96,Man wc rim/projection rep ea
+E0967,UE,,IN,59.67,Man wc rim/projection rep ea
+E0971,NU,,IN,34.76,Wheelchair anti-tipping devi
+E0971,RR,,IN,3.47,Wheelchair anti-tipping devi
+E0971,UE,,IN,26.05,Wheelchair anti-tipping devi
+E0973,NU,,IN,62.42,W/ch access det adj armrest
+E0973,RR,,IN,6.24,W/ch access det adj armrest
+E0973,UE,,IN,46.83,W/ch access det adj armrest
+E0974,NU,,IN,82.18,W/ch access anti-rollback
+E0974,RR,,IN,8.22,W/ch access anti-rollback
+E0974,UE,,IN,61.63,W/ch access anti-rollback
+E0978,NU,,IN,28.05,"W/c acc,saf belt pelv strap"
+E0978,RR,,IN,2.83,"W/c acc,saf belt pelv strap"
+E0978,UE,,IN,21.05,"W/c acc,saf belt pelv strap"
+E0985,RR,,CR,24.57,W/c seat lift mechanism
+E0990,NU,,IN,86.12,Wheelchair elevating leg res
+E0990,RR,,IN,8.62,Wheelchair elevating leg res
+E0990,UE,,IN,64.59,Wheelchair elevating leg res
+E0992,NU,,IN,89.24,Wheelchair solid seat insert
+E0992,RR,,IN,8.92,Wheelchair solid seat insert
+E0992,UE,,IN,66.92,Wheelchair solid seat insert
+E1015,NU,,IN,134.82,Shock absorber for man w/c
+E1015,RR,,IN,13.48,Shock absorber for man w/c
+E1015,UE,,IN,101.11,Shock absorber for man w/c
+E1016,NU,,IN,124.54,Shock absorber for power w/c
+E1016,RR,,IN,12.45,Shock absorber for power w/c
+E1016,UE,,IN,93.41,Shock absorber for power w/c
+E1020,RR,,CR,20.86,Residual limb support system
+E1028,RR,,CR,15.4,W/c manual swingaway
+E1031,RR,,CR,53.57,Rollabout chair with casters
+E1032,RR,,CR,15.4,Wheelchair joystick drive
+E1033,RR,,CR,15.4,Wheelchair hardware headrest
+E1034,RR,,CR,15.4,Wheelchair trunk hip support
+E1035,RR,,CR,656.7,Patient transfer system <300
+E1036,RR,,CR,922.57,Patient transfer system >300
+E1037,RR,,CR,105.3,"Transport chair, ped size"
+E1038,RR,,CR,17.98,Transport chair pt wt<=300lb
+E1039,RR,,CR,35.39,Transport chair pt wt >300lb
+E1225,RR,,CR,44.56,Manual semi-reclining back
+E1226,NU,,IN,452.3,Manual fully reclining back
+E1226,RR,,IN,45.24,Manual fully reclining back
+E1226,UE,,IN,339.24,Manual fully reclining back
+E1372,NU,,IN,184.87,Oxy suppl heater for nebuliz
+E1372,RR,,IN,18.48,Oxy suppl heater for nebuliz
+E1372,UE,,IN,138.64,Oxy suppl heater for nebuliz
+E1390,RR,,OX,98.22,Oxygen concentrator
+E1390,RR,QB,OX,98.22,Oxygen concentrator
+E1390,RR,QF,OX,98.22,Oxygen concentrator
+E1391,RR,,OX,98.22,"Oxygen concentrator, dual"
+E1391,RR,QB,OX,98.22,"Oxygen concentrator, dual"
+E1391,RR,QF,OX,98.22,"Oxygen concentrator, dual"
+E1392,RR,,OX,46.87,Portable oxygen concentrator
+E1392,RR,QB,OX,49.11,Portable oxygen concentrator
+E1392,RR,QF,OX,49.11,Portable oxygen concentrator
+E2201,NU,,IN,358.29,"Man w/ch acc seat w>=20""<24"""
+E2201,RR,,IN,35.82,"Man w/ch acc seat w>=20""<24"""
+E2201,UE,,IN,268.72,"Man w/ch acc seat w>=20""<24"""
+E2202,NU,,IN,514.26,Seat width 24-27 in
+E2202,RR,,IN,51.42,Seat width 24-27 in
+E2202,UE,,IN,385.7,Seat width 24-27 in
+E2203,NU,,IN,519.8,Frame depth less than 22 in
+E2203,RR,,IN,51.97,Frame depth less than 22 in
+E2203,UE,,IN,389.86,Frame depth less than 22 in
+E2204,NU,,IN,870.41,Frame depth 22 to 25 in
+E2204,RR,,IN,87.05,Frame depth 22 to 25 in
+E2204,UE,,IN,652.8,Frame depth 22 to 25 in
+E2205,NU,,IN,37.23,"Manual wc accessory, handrim"
+E2205,RR,,IN,3.72,"Manual wc accessory, handrim"
+E2205,UE,,IN,27.93,"Manual wc accessory, handrim"
+E2206,NU,,IN,44.88,Man wc whl lock comp repl ea
+E2206,RR,,IN,4.5,Man wc whl lock comp repl ea
+E2206,UE,,IN,33.66,Man wc whl lock comp repl ea
+E2207,NU,,IN,50.01,Crutch and cane holder
+E2207,RR,,IN,5.02,Crutch and cane holder
+E2207,UE,,IN,37.5,Crutch and cane holder
+E2208,NU,,IN,91.82,Cylinder tank carrier
+E2208,RR,,IN,9.18,Cylinder tank carrier
+E2208,UE,,IN,68.87,Cylinder tank carrier
+E2209,NU,,IN,96.3,Arm trough each
+E2209,RR,,IN,9.63,Arm trough each
+E2209,UE,,IN,72.22,Arm trough each
+E2210,NU,,IN,6.27,Wheelchair bearings
+E2210,RR,,IN,0.65,Wheelchair bearings
+E2210,UE,,IN,4.69,Wheelchair bearings
+E2211,NU,,IN,38.38,Pneumatic propulsion tire
+E2211,RR,,IN,3.84,Pneumatic propulsion tire
+E2211,UE,,IN,28.78,Pneumatic propulsion tire
+E2212,NU,,IN,6.5,Pneumatic prop tire tube
+E2212,RR,,IN,0.67,Pneumatic prop tire tube
+E2212,UE,,IN,4.87,Pneumatic prop tire tube
+E2213,NU,,IN,33.37,Pneumatic prop tire insert
+E2213,RR,,IN,3.34,Pneumatic prop tire insert
+E2213,UE,,IN,25.04,Pneumatic prop tire insert
+E2214,NU,,IN,35.97,Pneumatic caster tire each
+E2214,RR,,IN,3.61,Pneumatic caster tire each
+E2214,UE,,IN,26.96,Pneumatic caster tire each
+E2215,NU,,IN,11.57,Pneumatic caster tire tube
+E2215,RR,,IN,1.15,Pneumatic caster tire tube
+E2215,UE,,IN,8.68,Pneumatic caster tire tube
+E2219,NU,,IN,42.74,Foam caster tire any size ea
+E2219,RR,,IN,4.29,Foam caster tire any size ea
+E2219,UE,,IN,32.06,Foam caster tire any size ea
+E2220,NU,,IN,30.81,"Solid propuls tire, repl, ea"
+E2220,RR,,IN,3.07,"Solid propuls tire, repl, ea"
+E2220,UE,,IN,23.12,"Solid propuls tire, repl, ea"
+E2221,NU,,IN,30.5,"Solid caster tire repl, each"
+E2221,RR,,IN,3.05,"Solid caster tire repl, each"
+E2221,UE,,IN,22.87,"Solid caster tire repl, each"
+E2222,NU,,IN,24.39,"Solid caster integ whl, repl"
+E2222,RR,,IN,2.46,"Solid caster integ whl, repl"
+E2222,UE,,IN,18.3,"Solid caster integ whl, repl"
+E2224,NU,,IN,100.97,Propulsion whl excl tire rep
+E2224,RR,,IN,10.11,Propulsion whl excl tire rep
+E2224,UE,,IN,75.72,Propulsion whl excl tire rep
+E2225,NU,,IN,22.32,Caster wheel excludes tire
+E2225,RR,,IN,2.23,Caster wheel excludes tire
+E2225,UE,,IN,16.76,Caster wheel excludes tire
+E2226,NU,,IN,42.28,Caster fork replacement only
+E2226,RR,,IN,4.21,Caster fork replacement only
+E2226,UE,,IN,31.69,Caster fork replacement only
+E2228,RR,,CR,109.66,"Mwc acc, wheelchair brake"
+E2231,NU,,IN,164.68,Solid seat support base
+E2231,RR,,IN,16.48,Solid seat support base
+E2231,UE,,IN,123.52,Solid seat support base
+E2359,NU,,IN,204.16,Gr34 sealed leadacid battery
+E2359,RR,,IN,20.42,Gr34 sealed leadacid battery
+E2359,UE,,IN,153.13,Gr34 sealed leadacid battery
+E2361,NU,,IN,130.98,22nf sealed leadacid battery
+E2361,RR,,IN,13.1,22nf sealed leadacid battery
+E2361,UE,,IN,98.24,22nf sealed leadacid battery
+E2363,NU,,IN,166.92,Gr24 sealed leadacid battery
+E2363,RR,,IN,16.69,Gr24 sealed leadacid battery
+E2363,UE,,IN,125.19,Gr24 sealed leadacid battery
+E2365,NU,,IN,86.81,U1 sealed leadacid battery
+E2365,RR,,IN,8.69,U1 sealed leadacid battery
+E2365,UE,,IN,65.1,U1 sealed leadacid battery
+E2366,NU,,IN,177.2,"Battery charger, single mode"
+E2366,RR,,IN,17.72,"Battery charger, single mode"
+E2366,UE,,IN,132.89,"Battery charger, single mode"
+E2368,RR,,CR,46.25,Pwr wc drivewheel motor repl
+E2369,RR,,CR,40.7,Pwr wc drivewheel gear repl
+E2370,RR,,CR,64.05,Pwr wc dr wh motor/gear comb
+E2371,NU,,IN,166.65,Gr27 sealed leadacid battery
+E2371,RR,,IN,16.67,Gr27 sealed leadacid battery
+E2371,UE,,IN,124.99,Gr27 sealed leadacid battery
+E2375,RR,,CR,76.26,Non-expandable controller
+E2378,RR,,CR,59.06,Pw actuator replacement
+E2381,NU,,IN,69.39,Pneum drive wheel tire
+E2381,RR,,IN,6.95,Pneum drive wheel tire
+E2381,UE,,IN,52.07,Pneum drive wheel tire
+E2383,NU,,IN,135.97,"Insert, pneum wheel drive"
+E2383,RR,,IN,13.59,"Insert, pneum wheel drive"
+E2383,UE,,IN,102,"Insert, pneum wheel drive"
+E2384,NU,,IN,68.05,Pneumatic caster tire
+E2384,RR,,IN,6.82,Pneumatic caster tire
+E2384,UE,,IN,51.04,Pneumatic caster tire
+E2386,NU,,IN,119.41,Foam filled drive wheel tire
+E2386,RR,,IN,11.95,Foam filled drive wheel tire
+E2386,UE,,IN,89.57,Foam filled drive wheel tire
+E2387,NU,,IN,57.34,Foam filled caster tire
+E2387,RR,,IN,5.75,Foam filled caster tire
+E2387,UE,,IN,43.01,Foam filled caster tire
+E2391,NU,,IN,19.25,Solid caster tire
+E2391,RR,,IN,1.92,Solid caster tire
+E2391,UE,,IN,14.44,Solid caster tire
+E2392,NU,,IN,46.22,"Solid caster tire, integrate"
+E2392,RR,,IN,4.63,"Solid caster tire, integrate"
+E2392,UE,,IN,34.67,"Solid caster tire, integrate"
+E2394,NU,,IN,69.34,Drive wheel excludes tire
+E2394,RR,,IN,6.93,Drive wheel excludes tire
+E2394,UE,,IN,52.01,Drive wheel excludes tire
+E2395,NU,,IN,51.37,Caster wheel excludes tire
+E2395,RR,,IN,5.13,Caster wheel excludes tire
+E2395,UE,,IN,38.53,Caster wheel excludes tire
+E2396,NU,,IN,54.22,Caster fork
+E2396,RR,,IN,5.42,Caster fork
+E2396,UE,,IN,40.66,Caster fork
+E2397,NU,,IN,510.92,"Pwc acc, lith-based battery"
+E2397,RR,,IN,51.08,"Pwc acc, lith-based battery"
+E2397,UE,,IN,383.21,"Pwc acc, lith-based battery"
+E2402,RR,,CR,824.87,Neg press wound therapy pump
+E2601,NU,,IN,44.94,Gen w/c cushion wdth < 22 in
+E2601,RR,,IN,4.5,Gen w/c cushion wdth < 22 in
+E2601,UE,,IN,33.71,Gen w/c cushion wdth < 22 in
+E2602,NU,,IN,94.39,Gen w/c cushion wdth >=22 in
+E2602,RR,,IN,9.44,Gen w/c cushion wdth >=22 in
+E2602,UE,,IN,70.79,Gen w/c cushion wdth >=22 in
+E2603,NU,,IN,121.79,Skin protect wc cus wd <22in
+E2603,RR,,IN,12.17,Skin protect wc cus wd <22in
+E2603,UE,,IN,91.35,Skin protect wc cus wd <22in
+E2604,NU,,IN,172.06,Skin protect wc cus wd>=22in
+E2604,RR,,IN,17.21,Skin protect wc cus wd>=22in
+E2604,UE,,IN,129.06,Skin protect wc cus wd>=22in
+E2605,NU,,IN,239.99,Position wc cush wdth <22 in
+E2605,RR,,IN,24,Position wc cush wdth <22 in
+E2605,UE,,IN,180,Position wc cush wdth <22 in
+E2606,NU,,IN,374.39,Position wc cush wdth>=22 in
+E2606,RR,,IN,37.45,Position wc cush wdth>=22 in
+E2606,UE,,IN,280.81,Position wc cush wdth>=22 in
+E2607,NU,,IN,234.97,Skin pro/pos wc cus wd <22in
+E2607,RR,,IN,23.5,Skin pro/pos wc cus wd <22in
+E2607,UE,,IN,176.24,Skin pro/pos wc cus wd <22in
+E2608,NU,,IN,299.17,Skin pro/pos wc cus wd>=22in
+E2608,RR,,IN,29.91,Skin pro/pos wc cus wd>=22in
+E2608,UE,,IN,224.39,Skin pro/pos wc cus wd>=22in
+E2611,NU,,IN,182.35,Gen use back cush wdth <22in
+E2611,RR,,IN,18.24,Gen use back cush wdth <22in
+E2611,UE,,IN,136.74,Gen use back cush wdth <22in
+E2612,NU,,IN,357.42,Gen use back cush wdth>=22in
+E2612,RR,,IN,35.75,Gen use back cush wdth>=22in
+E2612,UE,,IN,268.05,Gen use back cush wdth>=22in
+E2613,NU,,IN,362.11,Position back cush wd <22in
+E2613,RR,,IN,36.21,Position back cush wd <22in
+E2613,UE,,IN,271.6,Position back cush wd <22in
+E2614,NU,,IN,511.11,Position back cush wd>=22in
+E2614,RR,,IN,51.11,Position back cush wd>=22in
+E2614,UE,,IN,383.33,Position back cush wd>=22in
+E2615,NU,,IN,408.32,Pos back post/lat wdth <22in
+E2615,RR,,IN,40.84,Pos back post/lat wdth <22in
+E2615,UE,,IN,306.24,Pos back post/lat wdth <22in
+E2616,NU,,IN,565.27,Pos back post/lat wdth>=22in
+E2616,RR,,IN,56.52,Pos back post/lat wdth>=22in
+E2616,UE,,IN,423.96,Pos back post/lat wdth>=22in
+E2620,NU,,IN,453.28,Wc planar back cush wd <22in
+E2620,RR,,IN,45.31,Wc planar back cush wd <22in
+E2620,UE,,IN,339.96,Wc planar back cush wd <22in
+E2621,NU,,IN,541.6,Wc planar back cush wd>=22in
+E2621,RR,,IN,54.16,Wc planar back cush wd>=22in
+E2621,UE,,IN,406.19,Wc planar back cush wd>=22in
+E2626,NU,,IN,734.48,Seo mobile arm sup att to wc
+E2626,RR,,IN,73.45,Seo mobile arm sup att to wc
+E2626,UE,,IN,550.85,Seo mobile arm sup att to wc
+E2627,NU,,IN,1194.16,Arm supp att to wc rancho ty
+E2627,RR,,IN,119.41,Arm supp att to wc rancho ty
+E2627,UE,,IN,895.6,Arm supp att to wc rancho ty
+E2628,NU,,IN,860.3,Mobile arm supports reclinin
+E2628,RR,,IN,86.03,Mobile arm supports reclinin
+E2628,UE,,IN,645.23,Mobile arm supports reclinin
+E2629,NU,,IN,1127.39,Friction dampening arm supp
+E2629,RR,,IN,112.74,Friction dampening arm supp
+E2629,UE,,IN,845.55,Friction dampening arm supp
+E2630,NU,,IN,800.36,Monosuspension arm/hand supp
+E2630,RR,,IN,80.02,Monosuspension arm/hand supp
+E2630,UE,,IN,600.27,Monosuspension arm/hand supp
+E2631,NU,,IN,317.17,Elevat proximal arm support
+E2631,RR,,IN,31.7,Elevat proximal arm support
+E2631,UE,,IN,237.87,Elevat proximal arm support
+E2632,NU,,IN,203.33,Offset/lat rocker arm w/ela
+E2632,RR,,IN,20.34,Offset/lat rocker arm w/ela
+E2632,UE,,IN,152.49,Offset/lat rocker arm w/ela
+E2633,NU,,IN,170.77,Mobile arm support supinator
+E2633,RR,,IN,17.06,Mobile arm support supinator
+E2633,UE,,IN,128.09,Mobile arm support supinator
+K0001,RR,,CR,30.81,Standard wheelchair
+K0002,RR,,CR,49.18,Stnd hemi (low seat) whlchr
+K0003,RR,,CR,46.61,Lightweight wheelchair
+K0004,RR,,CR,49.45,High strength ltwt whlchr
+K0006,RR,,CR,74.36,Heavy duty wheelchair
+K0007,RR,,CR,101.75,Extra heavy duty wheelchair
+K0015,RR,,CR,16.45,Detach non-adj ht armrst rep
+K0019,NU,,IN,13.6,"Arm pad repl, each"
+K0019,RR,,IN,1.38,"Arm pad repl, each"
+K0019,UE,,IN,10.2,"Arm pad repl, each"
+K0040,NU,,IN,61.59,Adjustable angle footplate
+K0040,RR,,IN,6.16,Adjustable angle footplate
+K0040,UE,,IN,46.2,Adjustable angle footplate
+K0052,NU,,IN,83.98,Swingaway detach ftrest repl
+K0052,RR,,IN,8.4,Swingaway detach ftrest repl
+K0052,UE,,IN,62.99,Swingaway detach ftrest repl
+K0053,NU,,IN,96.3,Elevate footrest articulate
+K0053,RR,,IN,9.63,Elevate footrest articulate
+K0053,UE,,IN,72.22,Elevate footrest articulate
+K0056,NU,,IN,105.91,Seat ht <17 or >=21 ltwt wc
+K0056,RR,,IN,10.6,Seat ht <17 or >=21 ltwt wc
+K0056,UE,,IN,79.45,Seat ht <17 or >=21 ltwt wc
+K0065,NU,,IN,57.01,Spoke protectors
+K0065,RR,,IN,5.7,Spoke protectors
+K0065,UE,,IN,42.76,Spoke protectors
+K0069,NU,,IN,109.78,Rr whl compl sol tire rep ea
+K0069,RR,,IN,10.98,Rr whl compl sol tire rep ea
+K0069,UE,,IN,82.34,Rr whl compl sol tire rep ea
+K0070,RR,,CR,19.2,Rr whl compl pne tire rep ea
+K0071,NU,,IN,124.54,Fr cstr comp pne tire rep ea
+K0071,RR,,IN,12.45,Fr cstr comp pne tire rep ea
+K0071,UE,,IN,93.41,Fr cstr comp pne tire rep ea
+K0072,NU,,IN,77.04,Fr cstr semi-pne tire rep ea
+K0072,RR,,IN,7.72,Fr cstr semi-pne tire rep ea
+K0072,UE,,IN,57.78,Fr cstr semi-pne tire rep ea
+K0073,NU,,IN,41.09,Caster pin lock each
+K0073,RR,,IN,4.11,Caster pin lock each
+K0073,UE,,IN,30.81,Caster pin lock each
+K0077,NU,,IN,62.93,Fr cstr asmb sol tire rep ea
+K0077,RR,,IN,6.29,Fr cstr asmb sol tire rep ea
+K0077,UE,,IN,47.19,Fr cstr asmb sol tire rep ea
+K0098,NU,,IN,28.67,"Drive belt for pwc, repl"
+K0098,RR,,IN,2.87,"Drive belt for pwc, repl"
+K0098,UE,,IN,21.51,"Drive belt for pwc, repl"
+K0105,NU,,IN,109.43,Iv hanger
+K0105,RR,,IN,10.94,Iv hanger
+K0105,UE,,IN,82.08,Iv hanger
+K0195,RR,,CR,13.75,Elevating whlchair leg rests
+K0733,NU,,IN,33.37,12-24hr sealed lead acid
+K0733,RR,,IN,3.34,12-24hr sealed lead acid
+K0733,UE,,IN,25.04,12-24hr sealed lead acid
+K0738,RR,,OX,46.87,Portable gas oxygen system
+K0738,RR,QB,OX,49.11,Portable gas oxygen system
+K0738,RR,QF,OX,49.11,Portable gas oxygen system
+K0800,NU,,IN,1023.38,Pov group 1 std up to 300lbs
+K0800,RR,,IN,102.36,Pov group 1 std up to 300lbs
+K0800,UE,,IN,767.53,Pov group 1 std up to 300lbs
+K0801,NU,,IN,1792.18,Pov group 1 hd 301-450 lbs
+K0801,RR,,IN,179.2,Pov group 1 hd 301-450 lbs
+K0801,UE,,IN,1344.14,Pov group 1 hd 301-450 lbs
+K0802,NU,,IN,2439.67,Pov group 1 vhd 451-600 lbs
+K0802,RR,,IN,243.96,Pov group 1 vhd 451-600 lbs
+K0802,UE,,IN,1829.74,Pov group 1 vhd 451-600 lbs
+K0813,RR,,CR,337.06,Pwc gp 1 std port seat/back
+K0814,RR,,CR,341.41,Pwc gp 1 std port cap chair
+K0815,RR,,CR,435.99,Pwc gp 1 std seat/back
+K0816,RR,,CR,385.03,Pwc gp 1 std cap chair
+K0820,RR,,CR,343.07,Pwc gp 2 std port seat/back
+K0821,RR,,CR,405.54,Pwc gp 2 std port cap chair
+K0822,RR,,CR,395.87,Pwc gp 2 std seat/back
+K0823,RR,,CR,364.99,Pwc gp 2 std cap chair
+K0824,RR,,CR,576.85,Pwc gp 2 hd seat/back
+K0825,RR,,CR,532.56,Pwc gp 2 hd cap chair
+K0826,RR,,CR,825.8,Pwc gp 2 vhd seat/back
+K0827,RR,,CR,785.63,Pwc gp vhd cap chair
+K0828,RR,,CR,1109.3,Pwc gp 2 xtra hd seat/back
+K0829,RR,,CR,1024.66,Pwc gp 2 xtra hd cap chair
+L0450,,,PO,102.36,Tlso flex trunk/thor pre ots
+L0455,,,PO,190.02,Tlso flex trnk sj-t9 pre ots
+L0457,,,PO,544.9,Tlso flex trnk sj-ss pre ots
+L0467,,,PO,213.1,Tlso r fram soft pre ots
+L0469,,,PO,271.53,Tlso rig fram pelvic pre ots
+L0621,,,PO,53.97,Sio flex pelvic/sacr pre ots
+L0623,,,PO,96.73,Sio rig pnl pelv/sac pre ots
+L0625,,,PO,30.19,Lo flex l1-below l5 pre ots
+L0628,,,PO,45.96,Lso flex no ri stays pre ots
+L0641,,,PO,42.71,Lo rig pos pnl l1-l5 pre ots
+L0642,,,PO,225.27,Lo sag ri an/pos pnl pre ots
+L0643,,,PO,88.74,Lso sag ctr rigi pos pre ots
+L0648,,,PO,562.56,Lso sag r an/pos pnl pre ots
+L0649,,,PO,157.15,Lso sc r pos/lat pnl pre ots
+L0650,,,PO,650.91,Lso sc r ant/pos pnl pre ots
+L0651,,,PO,650.91,Lso sag-co shell pnl pre ots
+L1812,,,PO,60.21,Ko elastic w/joints pre ots
+L1830,,,PO,54.27,Ko immob canvas long pre ots
+L1833,,,PO,390.88,Ko adj jnt pos r sup pre ots
+L1836,,,PO,76.72,Ko rigid w/o joints pre ots
+L1850,,,PO,176.71,Ko swedish type pre ots
+L1851,,,PO,515.92,Ko single upright prefab ots
+L1852,,,PO,492.18,Ko double upright prefab ots
