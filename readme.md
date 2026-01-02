@@ -6,4 +6,4 @@ Save as DMEPOS.csv and upload/overwrite in github.
 For "Former CBA Fee Schedule File- XXXXXXX.csv", delete the first 6 rows. Delete the "Mod3" column. Then delete from "Aiken County, SC" to "Covington, KY", then delete from "Dayton, OH' 
 to "Youngstown, OH".
 This should leave "HCPCS	Mod	Mod2	CATG	Dallas, TX	Description"
-Save as formerCBA.csv and upload/overwrite in github.
+Change "Dallas,TX" to "Dallas" Save as formerCBA.csv and upload/overwrite in github.
