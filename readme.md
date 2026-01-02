@@ -1,6 +1,6 @@
 To update the fee schedule (medicare)
 Get the new files from CMS, open the "DMEPOS25_XXX.csv" file and delete the first 6 rows. The HTML will pull  "HCPCS	Mod	Mod2	CATG	TX (NR)	TX (R)	Description"
-Save as DMEPOS.csv and upload/overwrite in github.
+Save as DMEPOS.csv and upload/to github.Keep this one for future issues, but copy/paste contents over contents in TexasRural.csv
 
 For "Former CBA Fee Schedule File- XXXXXXX.csv", delete the first 6 rows. Delete the "Mod3" column. Then delete from "Aiken County, SC" to "Covington, KY", then delete from "Dayton, OH' 
 to "Youngstown, OH".
