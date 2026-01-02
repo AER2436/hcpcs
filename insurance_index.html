@@ -77,13 +77,13 @@
   <script>
 // ===== CONFIG: url, columns, headers, note, computed =====
 const INSURERS = {
-  'CBA (Former CBA APR 2025)': {
+  'CBA (Former CBA JAN Q1 2026)': {
     url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA.csv',
     note: 'For RR (rental) rows: Default formula = DFW × 10.5. Special HCPCS (K0800–K0899, E1230–E1239) = Fee ÷ 0.15.',
     computed: [ { header: 'Full Payment (RR)', fn: 'full_rr_cba' } ],
   },
 
-  'Rural & Non CBA (custom view)': {
+  'Rural & Non CBA Q1 2026 (custom view)': {
     url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
     note: 'For RR (rental) rows: Default formulas = TX (NR) × 10.5 and TX (R) × 10.5. Special HCPCS (K0800–K0899, E1230–E1239) = Fee ÷ 0.15.',
     computed: [
