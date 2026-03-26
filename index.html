@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fee Schedule Lookup – All Plans</title>
+  <style>
+    :root { 
+      --bg:#ffffff; --panel:#fafafa; --muted:#555555; --fg:#000000; --accent:#003366; --border:#cccccc;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";background:var(--bg);color:var(--fg)}
+
+    .wrap{max-width:1200px;margin:0 auto;padding:24px;min-width:1100px}
+    h1{margin:0 0 18px;font-size:26px}
+
+    .toolbar{display:grid;grid-template-columns:340px 1fr auto;gap:12px;align-items:center;margin-bottom:12px}
+    .toolbar .select, .toolbar .search { width:100%;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid var(--border);color:var(--fg);outline:none }
+    .meta{font-size:12px;color:var(--muted);text-align:right}
+
+    .notice{ margin:12px 0; padding:10px 12px; border:1px solid var(--border); background:#fff; color:var(--fg); border-radius:10px; font-size:14px; }
+    .notice b{ font-weight:600 }
+
+    table{width:100%;border-collapse:collapse;border:1px solid var(--border);background:var(--panel)}
+    thead th{position:sticky;top:0;background:#f2f2f2;color:#000;z-index:1}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-variant-numeric:tabular-nums}
+    tbody tr:hover{background:#eef6ff}
+    .clickable{cursor:pointer;user-select:none}
+
+    tbody tr.selectable{cursor:pointer;user-select:none}
+    .sort-ind{color:var(--accent);font-size:11px;margin-left:6px}
+
+    .footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;color:var(--muted)}
+    .pager{display:flex;gap:6px}
+    .btn{background:#fff;color:#000;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer}
+    .btn[disabled]{opacity:.45;cursor:not-allowed}
+    .perpage{background:#fff;color:#000;border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+
+    .debug{margin-top:8px;padding:6px;border:1px dashed #bbb;color:#444;font:12px/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space:pre-wrap}
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:#fff; border-radius:12px; padding:24px; min-width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+    .modal h2 { margin:0 0 16px; font-size:16px; }
+    .modal label { display:block; font-weight:600; font-size:13px; margin-bottom:4px; margin-top:12px; }
+    .modal input { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+    .modal-btns { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
+    .text-preview-modal { max-width:480px; width:100%; }
+    .text-preview-box { white-space:pre-wrap; font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-size:13px; line-height:1.5; background:#f5f5f5; border:1px solid #ddd; border-radius:8px; padding:12px; max-height:400px; overflow-y:auto; margin-top:8px; }
+    .copy-confirm { font-size:12px; color:#1a7a3a; margin-left:8px; opacity:0; transition:opacity 0.3s; }
+    .copy-confirm.show { opacity:1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Fee Schedule Lookup – All Plans</h1>
+    <div class="toolbar">
+      <select id="plan" class="select" title="Choose an insurance/plan"></select>
+      <input id="q" class="search" placeholder="Search HCPCS or text… (e.g., A7030 or mask)" autocomplete="off" />
+      <div class="meta"><span id="count">0</span> rows • <span id="status">Select a plan</span></div>
+    </div>
+
+    <div id="plan-note" class="notice" hidden></div>
+
+
+    <div id="calc-panel" class="notice" hidden>
+      <div style="display:grid; grid-template-columns: 360px 1fr; gap:12px; align-items:start;">
+        <div>
+          <div id="pricepick-wrap" style="display:none; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
+            <label style="font-weight:600;">Fee used:</label>
+            <div id="dynamic-buttons" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+            <span id="pricepick-status" style="font-size:12px; color:#555;"></span>
+          </div>
+
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+            <label style="font-weight:600;">Remaining Part B deductible:</label>
+            <input id="dedrem" class="select" type="number" step="0.01" value="0" style="max-width:140px; padding:6px 10px; border-radius:8px;" />
+          </div>
+
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+            <label style="font-weight:600;">Coinsurance %:</label>
+            <input id="coinsPct" class="select" type="number" step="0.1" value="20" style="max-width:90px; padding:6px 10px; border-radius:8px;" />
+          </div>
+
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+            <input id="hasSupplement" type="checkbox" style="width:16px;height:16px;cursor:pointer;" />
+            <label for="hasSupplement" style="font-weight:600; cursor:pointer;">Supplement / Medigap (covers coinsurance)</label>
+          </div>
+
+          <div id="rentalSection" style="display:none;">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+              <label style="font-weight:600;">Rental start date:</label>
+              <input id="rentalStart" type="date" class="select" style="max-width:160px; padding:6px 10px; border-radius:8px;" />
+              <span style="font-size:12px;color:#555;" id="rentalMonthLabel"></span>
+            </div>
+          </div>
+
+
+          <div style="font-size:12px; color:#555;">
+            Tip: click any row in the table to add it. Change quantities on the right.
+          </div>
+
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="clearSel" class="btn" type="button">Clear selected</button>
+            <button id="printEstimate" class="btn" type="button" style="background:#003366; color:#fff;">Print estimate</button>
+            <button id="textSummary" class="btn" type="button" style="background:#1a7a3a; color:#fff;">Text summary</button>
+          </div>
+
+          <div style="margin-top:15px; padding-top:10px; border-top:1px solid #ddd; display:flex; gap:8px; flex-wrap:wrap;">
+            <div style="font-weight:700; width:100%; font-size:13px; margin-bottom:4px;">Quick Add Packages (NU):</div>
+            <button id="pkgWC" class="btn" type="button" style="border-color:#003366; font-size:13px;">+ W/C Accessories</button>
+            <button id="pkgCPAP" class="btn" type="button" style="border-color:#003366; font-size:13px;">+ CPAP Supplies</button>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-weight:700; margin-bottom:6px;">Selected items</div>
+          <table style="width:100%; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#fff;">
+            <thead>
+              <tr style="background:#f2f2f2;">
+                <th style="padding:8px;">HCPCS</th>
+                <th style="padding:8px;">Mod</th>
+                <th style="padding:8px;">Qty</th>
+                <th style="padding:8px;">RR total</th>
+                <th style="padding:8px;">Rate</th>
+                <th style="padding:8px;">Line</th>
+                <th style="padding:8px;"></th>
+              </tr>
+            </thead>
+            <tbody id="selbody"></tbody>
+          </table>
+
+          <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:10px; font-variant-numeric:tabular-nums;">
+            <div><b>Allowed total:</b> $<span id="t_allowed">0.00</span></div>
+            <div><b>Deductible applied:</b> $<span id="t_ded">0.00</span></div>
+            <div><b>Coinsurance:</b> $<span id="t_coin">0.00</span></div>
+            <div id="depositDisplay" style="display:none;"><b>RR Deposit (2 mo):</b> $<span id="t_deposit">0.00</span></div>
+            <div><b>Patient total:</b> $<span id="t_patient">0.00</span></div>
+          </div>
+
+          <div style="margin-top:8px; font-size:12px; color:#555;">
+            Math: deductible first, then co-insurance on the remainder.
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <table>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <div class="footer">
+      <div>
+        Rows per page:
+        <select id="perpage" class="perpage">
+          <option selected>5</option>
+          <option>10</option>
+          <option>20</option>
+        </select>
+      </div>
+      <div class="pager">
+        <button id="prev" class="btn">Prev</button>
+        <span id="pageinfo"></span>
+        <button id="next" class="btn">Next</button>
+      </div>
+    </div>
+
+    <div id="debug" class="debug"></div>
+  </div>
+
+    <!-- Print modal -->
+  <div id="printModal" class="modal-overlay">
+    <div class="modal">
+      <h2>Print Estimate</h2>
+      <label for="modalName">Patient name</label>
+      <input id="modalName" type="text" placeholder="e.g. Smith, Jane" autocomplete="off" />
+      <label for="modalDob">Date of birth</label>
+      <input id="modalDob" type="date" />
+      <div class="modal-btns">
+        <button id="modalCancel" class="btn" type="button">Cancel</button>
+        <button id="modalPrint" class="btn" type="button" style="background:#003366;color:#fff;">Print</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Text summary modal -->
+  <div id="textModal" class="modal-overlay">
+    <div class="modal text-preview-modal">
+      <h2>Text Summary</h2>
+      <label for="textModalName">Patient name</label>
+      <input id="textModalName" type="text" placeholder="e.g. Smith, Jane" autocomplete="off" />
+      <label for="textModalDob">Date of birth</label>
+      <input id="textModalDob" type="date" />
+      <div style="margin-top:14px; font-weight:600; font-size:13px;">Preview</div>
+      <div id="textPreviewBox" class="text-preview-box"></div>
+      <div class="modal-btns">
+        <button id="textModalCancel" class="btn" type="button">Cancel</button>
+        <button id="textModalRefresh" class="btn" type="button">Refresh preview</button>
+        <button id="textModalCopy" class="btn" type="button" style="background:#1a7a3a;color:#fff;">Copy to clipboard</button>
+        <span id="copyConfirm" class="copy-confirm">✓ Copied!</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ===== CONFIG: url, columns, headers, note, computed =====
+const INSURERS = {
+  'Medicare (Former CBA JAN Q1 2026)': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/formerCBA.csv',
+    rateHeader: 'Dallas',
+    note: 'For RR (rental) rows: Default formula = DFW × 10.5. Special HCPCS (K0800–K0899, E1230–E1239) = Fee ÷ 0.15.',
+    computed: [ { header: 'Full Payment (RR)', fn: 'full_rr_cba' } ],
+  },
+
+  'Medicare Rural & Non CBA Q1 2026 (custom view)': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
+    note: 'For RR (rental) rows: Default formulas = TX (NR) × 10.5 and TX (R) × 10.5. Special HCPCS (K0800–K0899, E1230–E1239) = Fee ÷ 0.15.',
+    computed: [
+      { header: 'Full Payment TX (NR)', fn: 'full_rr_txnr' },
+      { header: 'Full Payment TX (R)',  fn: 'full_rr_txr'  },
+    ],
+  },
+
+  'BCBS of Texas': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/BCBS_2024_DMEPOS_FEE.csv'
+  },
+
+  'Amerigroup': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/Amerigroup.csv',
+    columns: [0,1,5,7,1,2,3],
+    headers: ['HCPCS','Mod','Purchase','Rental','Age From','To',' '],
+  },
+
+  'UHC': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
+    columns: [0,1,4,6],
+    headers: ['HCPCS','Mod','TX (NR)','Description'],
+    note: 'We are out of network with United Healthcare, however most plans will pay out of network at Medicare base rates. There is a chance the allowable might be different from what is shown below, but in most cases it will be accurate.',
+  },
+
+  'CIGNA': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
+    columns: [0,1,4,6],
+    headers: ['HCPCS','Mod','TX (NR)','Description'],
+    computed: [
+      { header: 'Cigna 60%', from: 4, fn: 'pct', pct: 0.60 },
+      { header: 'Cigna 70%', from: 4, fn: 'pct', pct: 0.70 },
+    ],
+    note: 'CIGNA pays 60% of the Medicare unajusted rate, except for Power Mobility (devices,repairs and accessories) which is 70%. Choose the appropriate one per item.',
+  },
+
+  'AETNA': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/DMEPOS.csv',
+    columns: [0,1,4,6],
+    headers: ['HCPCS','Mod','Allowable','Description'],
+    note: 'We are out of network with AETNA, however most plans will pay out of network at Medicare base rates. There is a chance the allowable might be different from what is shown below, but in most cases it will be accurate',
+  },
+
+  'Medicaid (TMHP)': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/main/TMHP.csv',
+    columns: [1,2,3,4,5,7,6,9,8],
+    headers: ['HCPCS','Mod','Age from','To',' ','Purchase','Effective','Rental','Effective'],
+  },
+
+  'Amerivantage 2025': {
+    url: 'https://raw.githubusercontent.com/AER2436/hcpcs/refs/heads/main/amerivantage_2025.csv'
+  },
+};
+
+const BUNDLES = {
+  wc: [
+    { code: 'E0971', qty: 2 }, { code: 'E0973', qty: 2 }, 
+    { code: 'E0951', qty: 2 }, { code: 'E2601', qty: 1 }, 
+    { code: 'E2611', qty: 1 }
+  ],
+  cpap: [
+    { code: 'A7030', qty: 1 }, { code: 'A7031', qty: 1 }, { code: 'A7034', qty: 1 },
+    { code: 'A7032', qty: 1 }, { code: 'A7033', qty: 1 }, { code: 'A7035', qty: 1 },
+    { code: 'A7046', qty: 1 }, { code: 'A7038', qty: 1 }, { code: 'A7039', qty: 1 },
+    { code: 'A4604', qty: 1 }, { code: 'A7037', qty: 1 }
+  ]
+};
+
+const SHORT_DESC = {
+  'E0971': 'Anti-tipper',
+  'E0973': 'Adj Armrest',
+  'E0951': 'Footrests',
+  'E2601': 'Seat Cushion',
+  'E2611': 'Back Cushion',
+  'E2201': 'Extra Seat Width',
+};
+
+const params = new URLSearchParams(location.search);
+
+function getItemLabel(code, csvDesc) {
+  if (SHORT_DESC[code]) return SHORT_DESC[code];
+  if (csvDesc && csvDesc.trim()) return csvDesc.trim();
+  return code;
+}
+const defaultPlan = params.get('plan');
+
+const $ = (s, r=document) => r.querySelector(s);
+const el = (t, a={}, kids=[]) => { const n=document.createElement(t); for(const [k,v] of Object.entries(a)){ if(k==='class')n.className=v; else if(k==='text')n.textContent=v; else n.setAttribute(k,v);} for(const c of [].concat(kids)) n.append(c); return n; };
+
+function parseCSV(text){
+  const rows=[]; let row=[], field='', i=0, inQ=false; const push=()=>{row.push(field); field='';};
+  while(i<text.length){ const c=text[i]; if(inQ){ if(c==='"'){ if(text[i+1]==='"'){field+='"'; i++;} else inQ=false; } else field+=c; }
+    else { if(c==='"') inQ=true; else if(c===','){ push(); } else if(c==='\n'){ push(); rows.push(row); row=[]; } else if(c==='\r'){} else field+=c; }
+    i++; }
+  if(field!==''||row.length){ push(); rows.push(row); }
+  if(rows.length && rows[rows.length-1].every(x=>x==='')) rows.pop();
+  return rows;
+}
+
+function parseMoney(v){ const n = parseFloat(String(v ?? '').replace(/[^0-9.\-]/g,'')); return Number.isFinite(n) ? n : NaN; }
+function fmtMoney(n){ if (Number.isNaN(n)) return ''; return n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+const SPECIAL_CODES = new Set([
+  'K0813','K0814','K0815','K0816','K0820','K0821','K0822','K0823','K0824','K0825','K0826','K0827','K0828','K0829','K0835','K0836','K0837','K0838','K0839','K0840','K0841','K0842','K0843','K0848','K0849','K0850','K0851','K0852','K0853','K0854','K0855','K0856','K0857','K0858','K0859','K0860','K0861','K0862','K0863','K0864','K0868','K0869','K0870','K0871','K0877','K0884','K0885','K0886','K0887','K0888','K0889','K0890','K0891','K0898','K0899',
+]);
+
+function getExceptionSet(cfg){
+  if (cfg && Array.isArray(cfg.exceptionCodes) && cfg.exceptionCodes.length) { return new Set(cfg.exceptionCodes.map(c => String(c).toUpperCase().trim())); }
+  return SPECIAL_CODES;
+}
+
+let currentDisplayHeaders = [];
+let codeDisplayIdx = 0;
+let descDisplayIdx = -1;
+let selected = []; 
+let priceCol = -1;
+
+const calcPanel = document.getElementById('calc-panel');
+const pricePickWrap = document.getElementById('pricepick-wrap');
+const dynBtns = document.getElementById('dynamic-buttons');
+const pricePickStatus = document.getElementById('pricepick-status');
+const selBody = document.getElementById('selbody');
+const dedRemInput = document.getElementById('dedrem');
+const coinsPctInput = document.getElementById('coinsPct');
+const tAllowed = document.getElementById('t_allowed');
+const tDed = document.getElementById('t_ded');
+const tCoin = document.getElementById('t_coin');
+const tPatient = document.getElementById('t_patient');
+const clearSelBtn = document.getElementById('clearSel');
+const supplementChk = document.getElementById('hasSupplement');
+const rentalStartInput = document.getElementById('rentalStart');
+const rentalMonthLabel = document.getElementById('rentalMonthLabel');
+const rentalSection = document.getElementById('rentalSection');
+const depositDisplay = document.getElementById('depositDisplay');
+const printModal = document.getElementById('printModal');
+const modalName = document.getElementById('modalName');
+const modalDob = document.getElementById('modalDob');
+const modalCancel = document.getElementById('modalCancel');
+const modalPrint = document.getElementById('modalPrint');
+const textModal = document.getElementById('textModal');
+const textModalName = document.getElementById('textModalName');
+const textModalDob = document.getElementById('textModalDob');
+const textModalCancel = document.getElementById('textModalCancel');
+const textModalRefresh = document.getElementById('textModalRefresh');
+const textModalCopy = document.getElementById('textModalCopy');
+const textPreviewBox = document.getElementById('textPreviewBox');
+const copyConfirm = document.getElementById('copyConfirm');
+
+// Default rental start to today
+(function(){ const t = new Date(); rentalStartInput.value = t.toISOString().slice(0,10); })();
+
+// Given a start date string and a target year+month, return the rental month number (1-based).
+// Month 1 = same calendar month as start date.
+function getRentalMonthNumber(startStr, targetYear, targetMonth) {
+  if (!startStr) return null;
+  const start = new Date(startStr + 'T00:00:00');
+  if (isNaN(start)) return null;
+  const startYear = start.getFullYear();
+  const startMonth = start.getMonth(); // 0-based
+  return (targetYear - startYear) * 12 + (targetMonth - startMonth) + 1;
+}
+
+// Returns the rate factor (1.0 or 0.75) for a given rental month number.
+// Returns null if outside the 13-month window.
+function rrRateFactor(monthNum) {
+  if (monthNum < 1 || monthNum > 13) return null;
+  return monthNum <= 3 ? 1.0 : 0.75;
+}
+
+// Calculate deposit: look at Jan and Feb of next year, figure out which rental month each is,
+// apply the right rate, sum up. Returns { jan, feb, total, janMonth, febMonth }.
+function calcDeposit(startStr, monthlyBaseRate) {
+  const nextYear = new Date().getFullYear() + 1;
+  const janNum = getRentalMonthNumber(startStr, nextYear, 0); // January = month index 0
+  const febNum = getRentalMonthNumber(startStr, nextYear, 1); // February = month index 1
+  const janFactor = rrRateFactor(janNum);
+  const febFactor = rrRateFactor(febNum);
+  const jan = janFactor !== null ? monthlyBaseRate * janFactor : 0;
+  const feb = febFactor !== null ? monthlyBaseRate * febFactor : 0;
+  return { jan, feb, total: jan + feb, janMonth: janNum, febMonth: febNum, janFactor, febFactor };
+}
+const tDeposit = document.getElementById('t_deposit');
+const printBtn = document.getElementById('printEstimate');
+
+function money2(n){ return (Math.round((n + Number.EPSILON) * 100) / 100).toFixed(2); }
+function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function getSelectedPrintRows(){
+  const cfg = INSURERS[planSel.value]; if (!cfg) return [];
+  const projAll = data.length ? data.map(r => projectRow(r, cfg)) : [];
+  const descIdx = findDisplayIndexByName(['description','desc']);
+  const rows = [];
+  for (const item of selected){
+    const modIdx = getDisplayModIdx(); const mod2Idx = getDisplayMod2Idx();
+    const match = projAll.find(r => {
+      const code = getCodeFromProjectedRow(r);
+      const mod = (modIdx >= 0) ? normMod(cellVal(r[modIdx])) : '';
+      const mod2 = (mod2Idx >= 0) ? normMod(cellVal(r[mod2Idx])) : '';
+      return code === item.code && mod === (item.mod || '') && mod2 === (item.mod2 || '');
+    });
+    const desc = (descIdx >= 0 && match) ? String(cellVal(match[descIdx]) || '').trim() : '';
+    const rate = match ? getRateForSelectedItem(match, item) : NaN;
+    const baseRate = (match && String(item.mod || '').toUpperCase() === 'RR') ? getRateFromProjectedRowWithFallback(match) : NaN;
+    const qty = item.qty || 1;
+    const line = (!Number.isNaN(rate)) ? rate * qty : NaN;
+    rows.push({ code: item.code, mod: item.mod || '', mod2: item.mod2 || '', rrTotal: (String(item.mod || '').toUpperCase() === 'RR' && !!item.useFullRR) ? 'RR total' : '', desc, qty, rate, line, baseRate, isRR: String(item.mod || '').toUpperCase() === 'RR' });
+  }
+  return rows;
+}
+
+function buildTextSummary(patientName, patientDob) {
+  const cfg = INSURERS[planSel.value] || {};
+  const planLabel = String(cfg.name || planSel.value || '');
+  const rows = getSelectedPrintRows();
+  const hasSup = supplementChk && supplementChk.checked;
+  const startStr = rentalStartInput ? rentalStartInput.value : '';
+  const allowed  = parseFloat(tAllowed  ? tAllowed.textContent  : '0') || 0;
+  const dedAmt   = parseFloat(tDed      ? tDed.textContent      : '0') || 0;
+  const coinAmt  = parseFloat(tCoin     ? tCoin.textContent     : '0') || 0;
+  const deposit  = parseFloat(tDeposit  ? tDeposit.textContent  : '0') || 0;
+  const patient  = parseFloat(tPatient  ? tPatient.textContent  : '0') || 0;
+
+  const lines = [];
+  lines.push('Choice Medical Equipment');
+  lines.push('(940) 380-0455');
+  lines.push('');
+
+  if (patientName || patientDob) {
+    const dobStr = patientDob ? new Date(patientDob + 'T00:00:00').toLocaleDateString() : '';
+    lines.push('Patient: ' + (patientName || '—') + (dobStr ? '  |  DOB: ' + dobStr : ''));
+  }
+  lines.push('Plan: ' + planLabel);
+  lines.push('');
+
+  // Items
+  lines.push('EQUIPMENT:');
+  for (const r of rows) {
+    const mods = [r.mod, r.mod2].filter(x => x).join('-');
+    const modStr = mods ? ' ' + mods : '';
+    const rateStr = Number.isNaN(r.rate) ? '' : ' — $' + money2(r.rate) + (r.mod === 'RR' && !r.rrTotal ? '/mo' : '');
+    const rrTag = r.rrTotal ? ' (full 13-mo rental)' : '';
+    const label = getItemLabel(r.code, r.desc);
+    lines.push('  ' + r.code + modStr + ' — ' + label + ' x' + r.qty + rateStr + rrTag);
+  }
+  lines.push('');
+
+  // Allowed total sits under equipment, separate from what they owe
+  lines.push('  Total allowable: $' + money2(allowed));
+  lines.push('');
+
+  // Totals — only what patient owes
+  lines.push('ESTIMATED COSTS:');
+  if (dedAmt > 0)  lines.push('  Deductible: $' + money2(dedAmt));
+  if (hasSup)      lines.push('  Coinsurance: Covered by supplement');
+  else if (coinAmt > 0) lines.push('  Coinsurance (20%):   $' + money2(coinAmt));
+
+  // Deposit breakdown
+  if (deposit > 0 && startStr) {
+    const nextYear = new Date().getFullYear() + 1;
+    const rrBase = rows.filter(r => String(r.mod || '').toUpperCase() === 'RR' && !r.rrTotal && !Number.isNaN(r.baseRate))
+                       .reduce((s, r) => s + r.baseRate * r.qty, 0);
+    const dep = calcDeposit(startStr, rrBase);
+    const parts = [];
+    if (dep.janFactor !== null) parts.push(`Jan ${nextYear} (mo${dep.janMonth}) $${money2(dep.jan)}`);
+    if (dep.febFactor !== null) parts.push(`Feb ${nextYear} (mo${dep.febMonth}) $${money2(dep.feb)}`);
+    lines.push('  New year deposit:    $' + money2(deposit));
+    if (parts.length) lines.push('    (' + parts.join(' + ') + ')');
+  }
+
+  lines.push('  ----------------------');
+  lines.push('  Est. amount due today: $' + money2(patient));
+  lines.push('');
+
+  // Notes
+  if (deposit > 0) lines.push('* Medicare Part B deductible resets Jan 1. Deposit is applied to your account at the start of the new year.');
+  lines.push('* Medicare updates fee schedules quarterly — amounts may vary.');
+  lines.push('* This is an estimate only, not a bill.');
+
+  return lines.join('\n');
+}
+
+function buildPrintHtml(patientName, patientDob){
+  const cfg = INSURERS[planSel.value] || {};
+  const planLabel = String(cfg.name || planSel.value || '');
+  const now = new Date();
+  const dedRem = dedRemInput ? (parseFloat(dedRemInput.value || '0') || 0) : 0;
+  const coinPct = coinsPctInput ? (parseFloat(coinsPctInput.value || '20') || 20) : 20;
+  const hasSup = supplementChk && supplementChk.checked;
+  const startStr = rentalStartInput ? rentalStartInput.value : '';
+  const rows = getSelectedPrintRows();
+  const allowed = parseFloat(tAllowed ? tAllowed.textContent : '0') || 0;
+  const dedApplied = parseFloat(tDed ? tDed.textContent : '0') || 0;
+  const coinAmt = parseFloat(tCoin ? tCoin.textContent : '0') || 0;
+  const depositAmt = parseFloat(tDeposit ? tDeposit.textContent : '0') || 0;
+  const patient = parseFloat(tPatient ? tPatient.textContent : '0') || 0;
+
+  const patientLine = (patientName || patientDob)
+    ? `<div style="margin-top:4px;"><b>Patient:</b> ${escapeHtml(patientName || '—')}${patientDob ? ' &nbsp;|&nbsp; <b>DOB:</b> ' + escapeHtml(new Date(patientDob + 'T00:00:00').toLocaleDateString()) : ''}</div>`
+    : '';
+  const hasRR = rows.some(r => r.isRR);
+  const rrMonthly = rows.filter(r => r.isRR && !Number.isNaN(r.baseRate)).reduce((s, r) => s + r.baseRate * r.qty, 0);
+  let breakdownHtml = '';
+  const breakdownLines = [];
+
+  if (dedApplied > 0) {
+    breakdownLines.push(`<div class="bk-row"><div class="bk-label">🔹 Remaining Medicare Part B deductible </div><div class="bk-amt">$${money2(dedApplied)}</div></div><div class="bk-desc">Medicare requires the annual deductible to be met before coverage begins. Your remaining deductible of $${money2(dedApplied)} is due today.</div>`);
+  }
+  if (coinAmt > 0) {
+    breakdownLines.push(`<div class="bk-row"><div class="bk-label">🔹 Medicare coinsurance (${money2(coinPct)}%) <span class="bk-note">(your share after deductible)</span></div><div class="bk-amt">$${money2(coinAmt)}</div></div><div class="bk-desc">After your deductible is applied, Medicare covers 80% of the allowed amount. You are responsible for the remaining ${money2(coinPct)}%.</div>`);
+  }
+  if (depositAmt > 0 && hasRR) {
+    const nextYear = new Date().getFullYear() + 1;
+    const depInfo = calcDeposit(startStr, rrMonthly);
+    const monthLines = [];
+    if (depInfo.janFactor !== null) monthLines.push(`January ${nextYear} (rental month ${depInfo.janMonth}): ${depInfo.janMonth <= 3 ? 'full allowable' : '75% reduced allowable'} = $${money2(depInfo.jan)}`);
+    if (depInfo.febFactor !== null) monthLines.push(`February ${nextYear} (rental month ${depInfo.febMonth}): ${depInfo.febMonth <= 3 ? 'full allowable' : '75% reduced allowable'} = $${money2(depInfo.feb)}`);
+    const monthDetail = monthLines.map(l => `<div style="margin:2px 0 2px 8px;">• ${l}</div>`).join('');
+    breakdownLines.push(`<div class="bk-row"><div class="bk-label">🔹 Estimated deposit — new year deductible <span class="bk-note">(Jan 1 reset)</span></div><div class="bk-amt">$${money2(depositAmt)}</div></div><div class="bk-desc">Medicare's Part B deductible resets every January 1. Based on your rental start date, your estimated monthly charges into the new year are:${monthDetail}After month 3, Medicare reduces the monthly rental allowable to 75%. This deposit will be applied to your account at the start of the new benefit year.</div>`);
+  }
+  if (hasSup && coinAmt === 0 && dedApplied === 0 && depositAmt === 0) {
+    // $0 owed — no section printed (per spec: only show when something owed)
+  }
+
+  if (breakdownLines.length > 0) {
+    breakdownHtml = `<div class="breakdown"><h2>Payment Breakdown</h2>${breakdownLines.join('<hr class="bk-sep"/>')}<div class="bk-total-row"><span>Estimated amount due today</span><span>$${money2(patient)}</span></div>${hasSup ? '<div class="bk-supp">✅ Supplement / Medigap on file — coinsurance covered by secondary insurance.</div>' : ''}</div>`;
+  }
+
+  const rowHtml = rows.map(r => {
+    const mods = [r.mod, r.mod2].filter(x => x).join('-');
+    const rateTxt = Number.isNaN(r.rate) ? '' : money2(r.rate);
+    const lineTxt = Number.isNaN(r.line) ? '' : money2(r.line);
+    const label = getItemLabel(r.code, r.desc);
+    return `<tr><td class="code">${escapeHtml(r.code)}</td><td class="mods">${escapeHtml(mods)}</td><td class="desc">${escapeHtml(label)}</td><td class="qty">${escapeHtml(r.qty)}</td><td class="rrtag">${escapeHtml(r.rrTotal)}</td><td class="num">${escapeHtml(rateTxt)}</td><td class="num">${escapeHtml(lineTxt)}</td></tr>`;
+  }).join('');
+
+  return `<!doctype html><html><head><meta charset="utf-8" /><title>Estimate</title><style> :root { --border:#ddd; } body { font-family: Arial, Helvetica, sans-serif; margin: 24px; color:#111; } h1 { font-size: 18px; margin: 0 0 6px 0; } .sub { font-size: 12px; color:#444; margin-bottom: 14px; } .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; } .box { border:1px solid var(--border); border-radius:10px; padding:12px; } .box h2 { font-size: 13px; margin:0 0 8px 0; } .kv { font-size: 12px; display:flex; justify-content:space-between; gap:12px; margin: 4px 0; } table { width:100%; border-collapse: collapse; border:1px solid var(--border); } th, td { border-bottom:1px solid var(--border); padding:8px; font-size: 12px; vertical-align: top; } th { background:#f3f3f3; text-align:left; } td.num, th.num { text-align:right; font-variant-numeric: tabular-nums; } td.qty { text-align:center; width:52px; } td.code { width:72px; font-weight:700; } td.mods { width:70px; } td.rrtag { width:70px; font-size:11px; color:#333; } .totals { margin-top: 12px; } .totals .kv { font-size: 13px; } .disclaimer { margin-top: 14px; font-size: 11px; color:#333; line-height: 1.35; } .muted { color:#666; } .footer { margin-top: 18px; font-size: 11px; color:#555; } .breakdown { margin-top:16px; border:1px solid #b8d4f0; border-radius:10px; padding:14px; background:#f0f7ff; } .breakdown h2 { font-size:14px; margin:0 0 10px 0; color:#003366; } .bk-row { display:flex; justify-content:space-between; align-items:baseline; margin:8px 0 2px 0; } .bk-label { font-size:13px; font-weight:600; } .bk-amt { font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; padding-left:12px; } .bk-note { font-weight:400; font-size:11px; color:#555; } .bk-desc { font-size:11px; color:#444; margin:0 0 6px 16px; line-height:1.4; } .bk-sep { border:none; border-top:1px solid #cde0f5; margin:8px 0; } .bk-total-row { display:flex; justify-content:space-between; font-size:14px; font-weight:700; border-top:2px solid #003366; margin-top:10px; padding-top:8px; color:#003366; } .bk-supp { margin-top:8px; font-size:11px; color:#2a6a2a; } @media print{ body { margin: 0.5in; } .no-print { display:none; } table { page-break-inside: auto; } tr { page-break-inside: avoid; page-break-after: auto; } } </style></head><body><h1>DME Cost Estimate (Not a Bill)</h1><div class="sub"><div><b>Plan:</b> ${escapeHtml(planLabel)}</div>${patientLine}<div class="muted">Printed: ${escapeHtml(now.toLocaleString())}</div></div><div class="grid"><div class="box"><h2>Inputs</h2><div class="kv"><span>Remaining deductible</span><span>$${escapeHtml(money2(dedRem))}</span></div><div class="kv"><span>Coinsurance</span><span>${hasSup ? 'Covered by supplement' : escapeHtml(money2(coinPct)) + '%'}</span></div></div><div class="box"><h2>Totals</h2><div class="kv"><span>Allowed total</span><span>$${escapeHtml(money2(allowed))}</span></div><div class="kv"><span>Deductible applied</span><span>$${escapeHtml(money2(dedApplied))}</span></div><div class="kv"><span>Coinsurance</span><span>$${escapeHtml(money2(coinAmt))}</span></div>${depositAmt > 0 ? `<div class="kv"><span>New year deposit (2 mo RR)</span><span>$${escapeHtml(money2(depositAmt))}</span></div>` : ''}<div class="kv"><b>Estimated patient total</b><b>$${escapeHtml(money2(patient))}</b></div></div></div><table><thead><tr><th>HCPCS</th><th>Mod</th><th>Description</th><th class="num">Qty</th><th>RR</th><th class="num">Rate used</th><th class="num">Line total</th></tr></thead><tbody>${rowHtml || '<tr><td colspan="7" class="muted">No items selected.</td></tr>'}</tbody></table>${breakdownHtml}<div class="disclaimer"><b>Important:</b> This is an estimate only. Actual patient responsibility may differ based on Medicare/payer processing, deductible status, and secondary coverage. For rental items, ongoing monthly coinsurance may apply unless an "RR total" option was selected for that line. <b>Medicare updates its fee schedule quarterly</b> — the allowable amounts used in this estimate reflect the current fee schedule and may change in future billing periods.</div><div class="footer">Choice Medical Equipment • (940) 380-0455</div></body></html>`;
+}
+
+
+function printEstimate(patientName, patientDob){
+  let w = null; try { w = window.open('about:blank', '_blank'); } catch (e) { w = null; }
+  if (!w) return;
+  let html = ''; try { html = buildPrintHtml(patientName, patientDob); } catch (e) { w.document.open(); w.document.write('<pre style="font-family:monospace;white-space:pre-wrap;padding:16px;">Print template error:\n' + String(e && e.stack ? e.stack : e) + '</pre>'); w.document.close(); return; }
+  try { w.document.open(); w.document.write(html); w.document.close(); w.onload = function(){ try { w.focus(); } catch(e) {} setTimeout(function(){ try { w.print(); } catch(e) {} }, 100); }; } catch (e) {}
+}
+
+function findDisplayIndexByName(names){
+  for (const n of names){ const needle = String(n).toLowerCase().trim(); const idx = currentDisplayHeaders.findIndex(h => String(h).toLowerCase().trim() === needle); if (idx >= 0) return idx; }
+  for (const n of names){ const needle = String(n).toLowerCase().trim(); const idx = currentDisplayHeaders.findIndex(h => String(h).toLowerCase().includes(needle)); if (idx >= 0) return idx; }
+  return -1;
+}
+
+function findHeaderExact(name){ const needle = String(name).trim().toLowerCase(); return currentDisplayHeaders.findIndex(h => String(h).trim().toLowerCase() === needle); }
+
+function setPriceCol(idx){
+  priceCol = idx;
+  if (pricePickStatus && idx >= 0) { pricePickStatus.textContent = 'Using: ' + currentDisplayHeaders[idx]; }
+  else if (pricePickStatus) { pricePickStatus.textContent = ''; }
+  renderSelected();
+}
+
+function getCodeFromProjectedRow(row){ const idx = (codeDisplayIdx >= 0) ? codeDisplayIdx : 0; return String(cellVal(row[idx]) ?? '').toUpperCase().trim(); }
+
+function getRateFromProjectedRow(row){
+  if (priceCol < 0) return NaN;
+  return parseMoney(cellVal(row[priceCol]));
+}
+
+function isTxRuralNonCbaPlan(){
+  const cfg = INSURERS[planSel.value];
+  const planName = String((cfg && cfg.name) || planSel.value || '').toLowerCase();
+  return planName.includes('rural') && planName.includes('non cba') && planName.includes('q1 2026');
+}
+
+function getRateFromProjectedRowWithFallback(row){
+  let rate = getRateFromProjectedRow(row);
+  if (isTxRuralNonCbaPlan() && (Number.isNaN(rate) || rate === 0)) {
+    const txnr = findHeaderExact('TX (NR)'); const txr = findHeaderExact('TX (R)');
+    if (priceCol === txr && txnr >= 0) { const alt = parseMoney(cellVal(row[txnr])); if (!Number.isNaN(alt) && alt > 0) return alt; }
+    if (priceCol === txnr && txr >= 0) { const alt = parseMoney(cellVal(row[txr])); if (!Number.isNaN(alt) && alt > 0) return alt; }
+  }
+  return rate;
+}
+
+function getFullPaymentRateFromProjectedRow(row){
+  const cfg = INSURERS[planSel.value]; if (!cfg) return NaN;
+  const planName = String((cfg && cfg.name) || planSel.value || '').toLowerCase();
+  if (planName.includes('cba') && planName.includes('former')) { const idx = findHeaderExact('Full Payment (RR)'); if (idx >= 0) return parseMoney(cellVal(row[idx])); return NaN; }
+  if (isTxRuralNonCbaPlan()){
+    const txnr = findHeaderExact('TX (NR)'); const txr = findHeaderExact('TX (R)');
+    if (priceCol === txnr){ const idx = findHeaderExact('Full Payment TX (NR)'); if (idx >= 0) return parseMoney(cellVal(row[idx])); }
+    if (priceCol === txr){ const idx = findHeaderExact('Full Payment TX (R)'); if (idx >= 0) return parseMoney(cellVal(row[idx])); }
+  }
+  return NaN;
+}
+
+function isMedicarePlan(){
+  const name = String(planSel.value || '').toLowerCase();
+  return name.includes('medicare');
+}
+
+function updateMedicareVisibility(){
+  const show = isMedicarePlan();
+  if (rentalSection) rentalSection.style.display = show ? '' : 'none';
+}
+
+function getRateForSelectedItem(matchRow, item){
+  const baseRate = getRateFromProjectedRowWithFallback(matchRow);
+  if (item && item.useFullRR && String(item.mod || '').toUpperCase() === 'RR') { const full = getFullPaymentRateFromProjectedRow(matchRow); if (!Number.isNaN(full) && full > 0) return full; }
+  return baseRate;
+}
+
+function getDisplayModIdx(){ return findDisplayIndexByName(['mod','modifier']); }
+function getDisplayMod2Idx(){ return findDisplayIndexByName(['mod2','modifier2','modifier 2','mod 2']); }
+function normMod(v){ return String(v || '').toUpperCase().trim(); }
+
+function addBundle(type) {
+  const cfg = INSURERS[planSel.value]; if (!cfg || !data.length) return;
+  const itemsToAdd = BUNDLES[type]; const projAll = data.map(r => projectRow(r, cfg)); const modIdx = getDisplayModIdx();
+  itemsToAdd.forEach(bundleItem => {
+    const match = projAll.find(r => { const rowCode = getCodeFromProjectedRow(r); const rowMod = (modIdx >= 0) ? normMod(cellVal(r[modIdx])) : ''; return rowCode === bundleItem.code && rowMod === 'NU'; });
+    if (match) { const key = bundleItem.code + '|NU|'; const existing = selected.find(s => s.key === key); if (existing) { existing.qty += bundleItem.qty; } else { selected.push({ key, code: bundleItem.code, mod: 'NU', mod2: '', qty: bundleItem.qty, useFullRR: false }); } }
+  });
+  renderSelected();
+}
+
+function recalcTotals(){
+  const cfg = INSURERS[planSel.value]; if (!cfg || !data.length) return;
+  const projAll = data.map(r => projectRow(r, cfg));
+  const dedRem = Math.max(0, parseFloat(dedRemInput.value || '0'));
+  const hasSup = supplementChk && supplementChk.checked;
+  const startStr = rentalStartInput ? rentalStartInput.value : '';
+  let allowed = 0;
+  let rrMonthlyBase = 0; // sum of base monthly rates for RR items (always month 1 = full)
+  for (const item of selected){
+    const modIdx = getDisplayModIdx(); const mod2Idx = getDisplayMod2Idx();
+    const match = projAll.find(r => {
+      const code = getCodeFromProjectedRow(r); const mod = (modIdx >= 0) ? normMod(cellVal(r[modIdx])) : ''; const mod2 = (mod2Idx >= 0) ? normMod(cellVal(r[mod2Idx])) : '';
+      return code === item.code && mod === (item.mod || '') && mod2 === (item.mod2 || '');
+    });
+    const rate = match ? getRateForSelectedItem(match, item) : NaN;
+    // Allowed total always uses month 1 (full) rate — this is an initial rental calculator
+    if (!Number.isNaN(rate)) allowed += rate * (item.qty || 1);
+    if (String(item.mod || '').toUpperCase() === 'RR') {
+      const monthlyBase = match ? getRateFromProjectedRowWithFallback(match) : NaN;
+      if (!Number.isNaN(monthlyBase)) rrMonthlyBase += monthlyBase * (item.qty || 1);
+    }
+  }
+  const dedApplied = Math.min(dedRem, allowed);
+  const postDed = allowed - dedApplied;
+  const pct = hasSup ? 0 : Math.max(0, parseFloat(coinsPctInput.value || '20')) / 100;
+  const coin = postDed * pct;
+  // Calculate deposit using rental start date
+  const depositInfo = (rrMonthlyBase > 0 && startStr) ? calcDeposit(startStr, rrMonthlyBase) : null;
+  const deposit = depositInfo ? depositInfo.total : 0;
+  const patient = dedApplied + coin + deposit;
+  tAllowed.textContent = money2(allowed);
+  tDed.textContent = money2(dedApplied);
+  tCoin.textContent = money2(coin);
+  if (tDeposit) tDeposit.textContent = money2(deposit);
+  if (depositDisplay) depositDisplay.style.display = (deposit > 0 && isMedicarePlan()) ? '' : 'none';
+  tPatient.textContent = money2(patient);
+  // Update rental month label
+  if (rentalMonthLabel) {
+    if (startStr && rrMonthlyBase > 0) {
+      const nextYear = new Date().getFullYear() + 1;
+      const janNum = getRentalMonthNumber(startStr, nextYear, 0);
+      const febNum = getRentalMonthNumber(startStr, nextYear, 1);
+      const parts = [];
+      if (janNum >= 1 && janNum <= 13) parts.push(`Jan ${nextYear} = month ${janNum} (${janNum <= 3 ? '100%' : '75%'})`);
+      if (febNum >= 1 && febNum <= 13) parts.push(`Feb ${nextYear} = month ${febNum} (${febNum <= 3 ? '100%' : '75%'})`);
+      if (parts.length === 0) parts.push(`Rental ends before Jan ${nextYear} — no deposit`);
+      rentalMonthLabel.textContent = parts.join(' · ');
+    } else {
+      rentalMonthLabel.textContent = '';
+    }
+  }
+}
+
+function renderSelected(){
+  selBody.innerHTML = ''; const cfg = INSURERS[planSel.value];
+  const projAll = (cfg && data.length) ? data.map(r => projectRow(r, cfg)) : [];
+  for (const item of selected){
+    const modIdx = getDisplayModIdx(); const mod2Idx = getDisplayMod2Idx();
+    const match = projAll.find(r => {
+      const code = getCodeFromProjectedRow(r); const mod = (modIdx >= 0) ? normMod(cellVal(r[modIdx])) : ''; const mod2 = (mod2Idx >= 0) ? normMod(cellVal(r[mod2Idx])) : '';
+      return code === item.code && mod === (item.mod || '') && mod2 === (item.mod2 || '');
+    });
+    const rate = match ? getRateForSelectedItem(match, item) : NaN;
+    const line = (!Number.isNaN(rate)) ? rate * (item.qty || 1) : NaN;
+    const tr = document.createElement('tr');
+    const tdCode = el('td', { text: item.code }); tdCode.style.padding = '8px';
+    const tdMod = el('td', { text: (item.mod2 ? (item.mod + '-' + item.mod2) : (item.mod || '')) }); tdMod.style.padding='8px';
+    const tdQty = document.createElement('td'); tdQty.style.padding='8px';
+    const qty = document.createElement('input'); qty.type = 'number'; qty.min = '1'; qty.step = '1'; qty.value = String(item.qty || 1); qty.style.width = '70px';
+    qty.addEventListener('click', (e) => e.stopPropagation()); qty.addEventListener('input', () => { item.qty = Math.max(1, parseInt(qty.value || '1', 10)); renderSelected(); });
+    tdQty.append(qty);
+    const tdRR = document.createElement('td'); tdRR.style.padding='8px';
+    if (String(item.mod || '').toUpperCase() === 'RR') {
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!item.useFullRR;
+      cb.addEventListener('click', (e) => e.stopPropagation()); cb.addEventListener('change', () => { item.useFullRR = cb.checked; renderSelected(); });
+      tdRR.append(cb);
+    } else { tdRR.textContent = ''; }
+    const tdRate = el('td', { text: Number.isNaN(rate) ? '' : money2(rate) }); tdRate.style.padding='8px';
+    const tdLine = el('td', { text: Number.isNaN(line) ? '' : money2(line) }); tdLine.style.padding='8px';
+    const tdX = document.createElement('td'); tdX.style.padding='8px';
+    const btn = document.createElement('button'); btn.className = 'btn'; btn.type = 'button'; btn.textContent = 'X';
+    btn.addEventListener('click', (e) => { e.stopPropagation(); selected = selected.filter(s => s !== item); renderSelected(); });
+    tdX.append(btn);
+    tr.append(tdCode, tdMod, tdQty, tdRR, tdRate, tdLine, tdX); selBody.append(tr);
+  }
+  recalcTotals();
+}
+
+function populatePriceColumns(){
+  const cfg = INSURERS[planSel.value]; const planName = String((cfg && cfg.name) || planSel.value || '').toLowerCase();
+  dynBtns.innerHTML = '';
+  
+  // Define candidate headers based on the specific plan
+  let candidates = [];
+  if (planName.includes('rural') && planName.includes('non cba')) {
+    candidates = ['TX (NR)', 'TX (R)'];
+  } else if (planName.includes('cigna')) {
+    candidates = ['Cigna 60%', 'Cigna 70%'];
+  } else if (cfg.rateHeader) {
+    candidates = [cfg.rateHeader];
+  }
+
+  if (candidates.length > 0) {
+    pricePickWrap.style.display = 'flex';
+    candidates.forEach(name => {
+      const idx = findHeaderExact(name);
+      if (idx >= 0) {
+        const b = el('button', { class: 'btn', type: 'button', text: name });
+        b.addEventListener('click', () => setPriceCol(idx));
+        dynBtns.append(b);
+      }
+    });
+    // Default to the first candidate if current priceCol is invalid for this plan
+    const firstIdx = findHeaderExact(candidates[0]);
+    if (firstIdx >= 0) setPriceCol(firstIdx);
+  } else {
+    // Standard plan behavior
+    pricePickWrap.style.display = 'none';
+    const preferred = ['allowable','fee','rate','payment','rental','purchase'];
+    let pick = -1;
+    for (const p of preferred){ const i = currentDisplayHeaders.findIndex(x => String(x).toLowerCase().includes(p)); if (i >= 0) { pick = i; break; } }
+    if (pick < 0) pick = 2;
+    setPriceCol(pick);
+  }
+  calcPanel.hidden = false;
+}
+
+let headers=[], data=[], filtered=[], sortKey=0, sortDir=1, page=1;
+let currentHeaderIndex = {}; let currentExceptionSet = SPECIAL_CODES;
+const planSel = $('#plan'), q = $('#q'), thead = $('#thead'), tbody = $('#tbody'), perSel = $('#perpage'), pageInfo = $('#pageinfo'), prev = $('#prev'), next = $('#next'), count = $('#count'), status = $('#status'), noteEl = document.getElementById('plan-note'), debug = document.getElementById('debug');
+
+function populatePlans(){
+  planSel.innerHTML = ''; const keys = Object.keys(INSURERS);
+  for (const name of keys){ planSel.append(new Option(name, name)); }
+  if (defaultPlan) { const match = keys.find(k => k.toLowerCase() === defaultPlan.toLowerCase()); if (match) planSel.value = match; }
+}
+
+function renderHead(displayHeaders){
+  thead.innerHTML=''; const tr = el('tr');
+  displayHeaders.forEach((h, idx) => {
+    const th = el('th', { class: 'clickable' }); const label = el('span', { text: h || `Col ${idx+1}` }); const ind = el('span', { class: 'sort-ind', text: idx === sortKey ? (sortDir === 1 ? '▲' : '▼') : '' });
+    th.append(label, ind); th.addEventListener('click', () => { if (sortKey === idx) sortDir *= -1; else { sortKey = idx; sortDir = 1; } renderHead(displayHeaders); update(); });
+    tr.append(th);
+  });
+  thead.append(tr);
+}
+
+function findColIndexByName(names){ for(const n of names){ const k=String(n).toLowerCase().trim(); if(k in currentHeaderIndex) return currentHeaderIndex[k]; } return -1; }
+function isSpecialCode(row){ const codeIdx = findColIndexByName(['hcpcs','code']); const code = String(row?.[codeIdx] ?? '').toUpperCase().trim(); return code && currentExceptionSet.has(code); }
+function rentalTotalFromBase(baseVal, row){ const n = parseMoney(baseVal); if (Number.isNaN(n)) return { text: '', special: false }; const special = isSpecialCode(row); const factor = special ? (1/0.15) : 10.5; return { text: fmtMoney(n * factor), special }; }
+
+function projectRow(row, cfg){
+  let out = (!cfg.columns || !cfg.headers) ? row.slice() : cfg.columns.map(ci => row[ci] ?? '');
+  if (cfg.computed && cfg.computed.length){
+    for (const c of cfg.computed){
+      let value = '';
+      if (c.fn === 'pct'){ const baseNum = parseMoney(row[c.from]); value = { text: fmtMoney(baseNum * (c.pct ?? 0)), special: false }; }
+      else if (c.fn === 'full_rr_cba'){ const modIdx = findColIndexByName(['mod','modifier']), dfwIdx = findColIndexByName(['dallas', 'dfw']); if (modIdx >= 0 && dfwIdx >= 0 && String(row[modIdx]).trim().toUpperCase() === 'RR'){ value = rentalTotalFromBase(row[dfwIdx], row); } else { value = { text: '', special: false }; } }
+      else if (c.fn === 'full_rr_txnr'){ const modIdx = findColIndexByName(['mod','modifier']), txnrIdx = findColIndexByName(['tx (nr)','tx nr','tx_non_rural','non rural']); if (modIdx >= 0 && txnrIdx >= 0 && String(row[modIdx]).trim().toUpperCase() === 'RR'){ value = rentalTotalFromBase(row[txnrIdx], row); } else { value = { text: '', special: false }; } }
+      else if (c.fn === 'full_rr_txr'){ const modIdx = findColIndexByName(['mod','modifier']), txrIdx = findColIndexByName(['tx (r)','tx r','tx_rural','rural']); if (modIdx >= 0 && txrIdx >= 0 && String(row[modIdx]).trim().toUpperCase() === 'RR'){ value = rentalTotalFromBase(row[txrIdx], row); } else { value = { text: '', special: false }; } }
+      out.push(value);
+    }
+  }
+  return out;
+}
+
+function cellVal(c){ return (c && typeof c === 'object' && 'text' in c) ? c.text : c; }
+
+function update(){
+  const cfg = INSURERS[planSel.value]; const proj = data.map(r => projectRow(r, cfg)); const term = q.value.trim().toLowerCase();
+  filtered = term ? proj.filter(r => r.some(c => String(cellVal(c) || '').toLowerCase().includes(term))) : proj;
+  filtered.sort((a,b)=>{ const av = cellVal(a[sortKey]) ?? '', bv = cellVal(b[sortKey]) ?? ''; const an = parseFloat(String(av).replace(/[^0-9.\-]/g,'')), bn = parseFloat(String(bv).replace(/[^0-9.\-]/g,'')); const cmp = (!Number.isNaN(an)&&!Number.isNaN(bn)) ? (an-bn) : String(av).localeCompare(String(bv),undefined,{numeric:true}); return cmp * sortDir; });
+  const per=parseInt(perSel.value,10), total=filtered.length, pages=Math.max(1,Math.ceil(total/per)); if(page>pages) page=pages; const start=(page-1)*per, slice=filtered.slice(start,start+per);
+  tbody.innerHTML='';
+  for(const row of slice){
+    const tr=el('tr', { class: 'selectable' });
+    tr.addEventListener('click', () => {
+      const code = getCodeFromProjectedRow(row); if (!code) return;
+      const modIdx = getDisplayModIdx(), mod2Idx = getDisplayMod2Idx();
+      const mod = (modIdx >= 0) ? normMod(cellVal(row[modIdx])) : '', mod2 = (mod2Idx >= 0) ? normMod(cellVal(row[mod2Idx])) : '';
+      const key = code + '|' + mod + '|' + mod2;
+      const existing = selected.find(s => s.key === key); if (existing) existing.qty += 1; else selected.push({ key, code, mod, mod2, qty: 1, useFullRR: false });
+      renderSelected();
+    });
+    for(const cell of row){ if (cell && typeof cell === 'object' && 'text' in cell){ const td = el('td', cell.special ? { class: 'special-cell' } : {}); td.textContent = cell.text; tr.append(td); } else { tr.append(el('td',{text:cell})); } }
+    tbody.append(tr);
+  }
+  count.textContent = total.toLocaleString(); pageInfo.textContent = `Page ${page} / ${pages}`; prev.disabled = page<=1; next.disabled = page>=pages;
+}
+
+async function loadPlan(){
+  const name = planSel.value; const cfg = INSURERS[name]; if (!cfg) return; status.textContent = 'Loading…'; page = 1; sortKey = 0; sortDir = 1; q.value = '';
+  if (cfg.note) { noteEl.hidden = false; noteEl.textContent = cfg.note; } else { noteEl.hidden = true; noteEl.textContent = ''; }
+  try {
+    const res = await fetch(cfg.url, { cache: 'no-store' }); if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text(); const rows = parseCSV(text); headers = rows[0] || []; data = rows.slice(1);
+    currentHeaderIndex = {}; headers.forEach((h,i)=>{ currentHeaderIndex[String(h||'').toLowerCase().trim()] = i; });
+    currentExceptionSet = getExceptionSet(cfg);
+    const baseHeaders = (cfg.columns && cfg.headers) ? cfg.headers : headers;
+    const compHeaders = (cfg.computed || []).map(c => c.header);
+    currentDisplayHeaders = [...baseHeaders, ...compHeaders];
+    codeDisplayIdx = findDisplayIndexByName(['hcpcs','code']); if (codeDisplayIdx < 0) codeDisplayIdx = 0;
+    descDisplayIdx = findDisplayIndexByName(['description','desc']);
+    renderHead(currentDisplayHeaders); populatePriceColumns(); update(); status.textContent = name;
+  } catch (e) {
+    if (debug) debug.textContent = 'loadPlan error: ' + (e && e.message);
+    calcPanel.hidden = true; selected = []; status.textContent = 'Error loading CSV'; thead.innerHTML = '<tr><th>Error</th></tr>'; tbody.innerHTML = ''; count.textContent = '0'; pageInfo.textContent = '';
+  }
+}
+
+planSel.addEventListener('change', () => { loadPlan(); updateMedicareVisibility(); });
+q.addEventListener('input', () => { page = 1; update(); });
+perSel.addEventListener('change', () => { page = 1; update(); });
+prev.addEventListener('click', () => { if (page>1) { page--; update(); } });
+next.addEventListener('click', () => { page++; update(); });
+dedRemInput.addEventListener('input', () => recalcTotals());
+coinsPctInput.addEventListener('input', () => recalcTotals());
+supplementChk.addEventListener('change', () => recalcTotals());
+rentalStartInput.addEventListener('input', () => recalcTotals());
+clearSelBtn.addEventListener('click', () => { selected = []; renderSelected(); });
+printBtn.addEventListener('click', () => {
+  modalName.value = '';
+  modalDob.value = '';
+  printModal.classList.add('open');
+  modalName.focus();
+});
+modalCancel.addEventListener('click', () => printModal.classList.remove('open'));
+printModal.addEventListener('click', (e) => { if (e.target === printModal) printModal.classList.remove('open'); });
+modalPrint.addEventListener('click', () => {
+  printModal.classList.remove('open');
+  printEstimate(modalName.value.trim(), modalDob.value);
+});
+document.getElementById('textSummary').addEventListener('click', () => {
+  textModalName.value = '';
+  textModalDob.value = '';
+  textPreviewBox.textContent = buildTextSummary('', '');
+  textModal.classList.add('open');
+  textModalName.focus();
+});
+textModalCancel.addEventListener('click', () => textModal.classList.remove('open'));
+textModal.addEventListener('click', (e) => { if (e.target === textModal) textModal.classList.remove('open'); });
+textModalRefresh.addEventListener('click', () => {
+  textPreviewBox.textContent = buildTextSummary(textModalName.value.trim(), textModalDob.value);
+});
+textModalName.addEventListener('input', () => {
+  textPreviewBox.textContent = buildTextSummary(textModalName.value.trim(), textModalDob.value);
+});
+textModalDob.addEventListener('input', () => {
+  textPreviewBox.textContent = buildTextSummary(textModalName.value.trim(), textModalDob.value);
+});
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    copyConfirm.classList.add('show');
+    setTimeout(() => copyConfirm.classList.remove('show'), 2000);
+  } catch(e) {
+    alert('Copy failed — please select the text manually and copy.');
+  }
+  document.body.removeChild(ta);
+}
+
+textModalCopy.addEventListener('click', () => {
+  const text = buildTextSummary(textModalName.value.trim(), textModalDob.value);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      copyConfirm.classList.add('show');
+      setTimeout(() => copyConfirm.classList.remove('show'), 2000);
+    }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+});
+document.getElementById('pkgWC').addEventListener('click', () => addBundle('wc'));
+document.getElementById('pkgCPAP').addEventListener('click', () => addBundle('cpap'));
+populatePlans();
+if (!planSel.value) planSel.selectedIndex = 0;
+updateMedicareVisibility();
+if (planSel.value) loadPlan();
+</script>
+</body>
+</html>
