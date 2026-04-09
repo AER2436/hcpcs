@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reorder Dashboard — Choice Medical Equipment</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0f2a4a; --navy-mid: #1a3d6b; --blue: #1e6fbf; --blue-light: #3b8de0;
+  --accent: #e8f2fc; --accent2: #f0f7ff;
+  --text: #0f1d2e; --text-mid: #3d5166; --text-muted: #7a92a8;
+  --border: #d0dce8; --border-light: #e8eff6; --bg: #f5f8fb; --white: #ffffff;
+  --urgent-bg: #fff1f1; --urgent-text: #b91c1c; --urgent-border: #fca5a5;
+  --warn-bg: #fffbeb; --warn-border: #fcd34d; --warn-text: #92400e;
+  --success: #059669; --radius: 12px; --radius-sm: 8px;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+header {
+  background: var(--navy); padding: 0 2.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+.logo-group { display: flex; align-items: center; gap: 14px; }
+.logo-mark {
+  width: 36px; height: 36px; background: var(--blue); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: white;
+}
+.logo-text { display: flex; flex-direction: column; gap: 1px; }
+.logo-name { font-size: 13px; font-weight: 600; color: white; }
+.logo-sub { font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+#sync-status { font-size: 12px; font-family: 'DM Mono', monospace; color: rgba(255,255,255,0.4); }
+#sync-status.ok { color: #34d399; }
+#sync-status.err { color: #f87171; }
+#file-date { font-size: 12px; color: rgba(255,255,255,0.4); font-family: 'DM Mono', monospace; }
+.hdr-btn {
+  background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-sm); padding: 7px 14px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; gap: 7px; transition: background 0.15s;
+}
+.hdr-btn:hover { background: rgba(255,255,255,0.18); }
+.hdr-btn.primary { background: var(--blue); border-color: var(--blue); }
+.hdr-btn.primary:hover { background: var(--blue-light); }
+.hdr-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+input[type="file"] { display: none; }
+
+main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+#token-modal {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 200; align-items: center; justify-content: center;
+}
+#token-modal.show { display: flex; }
+.modal-box {
+  background: var(--white); border-radius: var(--radius); padding: 2rem;
+  width: 480px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-title { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6; }
+.modal-sub a { color: var(--blue); }
+.modal-input {
+  width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 14px; font-family: 'DM Mono', monospace; font-size: 13px;
+  color: var(--text); margin-bottom: 1rem; outline: none;
+}
+.modal-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(30,111,191,0.1); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-btn {
+  padding: 8px 20px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border);
+  background: var(--white); color: var(--text); transition: background 0.15s;
+}
+.modal-btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
+.modal-btn.primary:hover { background: var(--blue-light); }
+.modal-note { font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+
+#drop-zone {
+  border: 1.5px dashed var(--border); border-radius: var(--radius);
+  padding: 4rem 2rem; text-align: center; cursor: pointer;
+  transition: all 0.2s; background: var(--white); margin-bottom: 2rem;
+}
+#drop-zone:hover, #drop-zone.drag-over { border-color: var(--blue); background: var(--accent2); }
+.drop-icon {
+  width: 52px; height: 52px; border-radius: 14px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;
+}
+.drop-icon svg { width: 24px; height: 24px; color: var(--blue); }
+.drop-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.drop-sub { font-size: 13px; color: var(--text-muted); }
+.drop-sub span { color: var(--blue); font-weight: 500; }
+
+#stats-row { display: none; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 2rem; }
+.stat-card { background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 1.25rem 1.5rem; }
+.stat-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: 300; color: var(--text); font-family: 'DM Mono', monospace; letter-spacing: -1px; }
+.stat-value.danger { color: var(--urgent-text); }
+.stat-value.money { color: var(--navy-mid); }
+
+#toolbar { display: none; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+.toolbar-right { display: flex; align-items: center; gap: 16px; }
+.legend { display: flex; gap: 18px; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+#show-struck { font-size: 12px; color: var(--text-muted); cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; }
+
+#vendor-list { display: flex; flex-direction: column; gap: 10px; }
+.vendor-card { background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; transition: box-shadow 0.15s; }
+.vendor-card:hover { box-shadow: 0 2px 12px rgba(15,42,74,0.07); }
+.vendor-header {
+  display: flex; align-items: center; padding: 1rem 1.5rem;
+  cursor: pointer; gap: 1rem; user-select: none; transition: background 0.1s;
+}
+.vendor-header:hover { background: var(--accent2); }
+.vendor-icon {
+  width: 38px; height: 38px; border-radius: 9px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+  color: var(--blue); flex-shrink: 0;
+}
+.vendor-info { flex: 1; min-width: 0; }
+.vendor-name { font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vendor-contact { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.vendor-right { text-align: right; flex-shrink: 0; }
+.vendor-total { font-size: 18px; font-weight: 500; color: var(--navy); font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+.vendor-total.no-cost { font-size: 13px; color: var(--text-muted); font-weight: 400; }
+.vendor-count { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.chevron { color: var(--text-muted); margin-left: 8px; transition: transform 0.2s; flex-shrink: 0; }
+.chevron.open { transform: rotate(180deg); }
+
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-urgent { background: var(--urgent-bg); color: var(--urgent-text); border: 1px solid var(--urgent-border); }
+
+.item-table-wrap { border-top: 1px solid var(--border-light); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: #f8fafc; padding: 9px 16px; text-align: left;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted);
+  border-bottom: 1px solid var(--border-light); white-space: nowrap;
+}
+thead th.r { text-align: right; }
+tbody td { padding: 10px 16px; border-bottom: 1px solid var(--border-light); color: var(--text); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody td.r { text-align: right; }
+tbody td.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+tbody tr.urgent-row td { background: var(--urgent-bg); }
+tbody tr.warn-row td { background: var(--warn-bg); }
+
+tbody tr.struck { display: none; }
+tbody tr.struck.visible { display: table-row; }
+tbody tr.struck.visible td { opacity: 0.4; }
+tbody tr.struck.visible .item-name { text-decoration: line-through; }
+
+.strike-btn {
+  background: none; border: 1px solid var(--border); border-radius: 5px;
+  width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; color: var(--text-muted); transition: all 0.15s; padding: 0;
+}
+.strike-btn:hover { border-color: var(--urgent-border); color: var(--urgent-text); background: var(--urgent-bg); }
+.struck .strike-btn { border-color: var(--success); color: var(--success); background: #f0fdf4; }
+.strike-btn svg { width: 12px; height: 12px; pointer-events: none; }
+
+.order-qty {
+  font-family: 'DM Mono', monospace; font-weight: 500; font-size: 14px;
+  color: var(--navy); background: var(--accent);
+  display: inline-block; padding: 2px 10px; border-radius: 5px;
+}
+.urgent-row .order-qty { background: var(--urgent-bg); color: var(--urgent-text); }
+.item-name { font-weight: 500; }
+.item-group { color: var(--text-muted); font-size: 12px; }
+.avail-neg { color: var(--urgent-text); font-weight: 600; }
+
+#empty { display: none; text-align: center; padding: 4rem 2rem; color: var(--text-muted); font-size: 14px; }
+
+#toast {
+  position: fixed; bottom: 2rem; right: 2rem; background: var(--navy);
+  color: white; padding: 12px 20px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; z-index: 300;
+  opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+#toast.error { background: #b91c1c; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-group">
+    <div class="logo-mark">CM</div>
+    <div class="logo-text">
+      <div class="logo-name">Choice Medical Equipment</div>
+      <div class="logo-sub">Reorder Dashboard</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="sync-status"></span>
+    <span id="file-date"></span>
+    <button class="hdr-btn primary" onclick="document.getElementById('file-input').click()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 10V3M5 6l3-3 3 3M3 12h10"/>
+      </svg>
+      Upload CSV
+    </button>
+    <button class="hdr-btn" onclick="showTokenModal()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/>
+      </svg>
+      GitHub Token
+    </button>
+    <input type="file" id="file-input" accept=".csv">
+  </div>
+</header>
+
+<div id="token-modal">
+  <div class="modal-box">
+    <div class="modal-title">GitHub Personal Access Token</div>
+    <div class="modal-sub">
+      This lets the dashboard save your reorder data to your GitHub repo so it's accessible from any device.<br><br>
+      Go to <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> → Tokens (classic) → New token → tick <strong>repo</strong> scope only. Your token is stored only in this browser.
+    </div>
+    <input class="modal-input" type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeTokenModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveToken()">Save token</button>
+    </div>
+    <div class="modal-note">Token is stored in your browser's localStorage and only ever sent to GitHub's API.</div>
+  </div>
+</div>
+
+<main>
+  <div id="drop-zone">
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <div class="drop-title">Drop your CSV here</div>
+    <div class="drop-sub">or <span>click to browse</span> — export Inventory_Reorder from Brightree</div>
+  </div>
+
+  <div id="stats-row">
+    <div class="stat-card"><div class="stat-label">Items to reorder</div><div class="stat-value" id="s-items">—</div></div>
+    <div class="stat-card"><div class="stat-label">Vendors</div><div class="stat-value" id="s-vendors">—</div></div>
+    <div class="stat-card"><div class="stat-label">Urgent (negative)</div><div class="stat-value danger" id="s-urgent">—</div></div>
+    <div class="stat-card"><div class="stat-label">Est. total cost</div><div class="stat-value money" id="s-cost">—</div></div>
+  </div>
+
+  <div id="toolbar">
+    <div class="section-title">By vendor</div>
+    <div class="toolbar-right">
+      <label id="show-struck">
+        <input type="checkbox" id="show-struck-cb"> Show struck-off items
+      </label>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--urgent-border)"></div>Negative qty</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--warn-border)"></div>Zero available</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="vendor-list"></div>
+  <div id="empty">No items at or below minimum quantity.</div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const OWNER = 'AER2436';
+const REPO  = 'hcpcs';
+const PATH  = 'reorder-data.json';
+const API   = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`;
+
+let state = { items: [], struckIds: [], lastUpdated: null };
+let showStruck = false;
+
+function getToken() { return localStorage.getItem('gh_pat') || ''; }
+
+function showTokenModal() {
+  document.getElementById('token-input').value = getToken();
+  document.getElementById('token-modal').classList.add('show');
+}
+function closeTokenModal() { document.getElementById('token-modal').classList.remove('show'); }
+function saveToken() {
+  const t = document.getElementById('token-input').value.trim();
+  if (t) localStorage.setItem('gh_pat', t);
+  closeTokenModal();
+  if (t) { toast('Token saved — loading data…'); loadFromGitHub(); }
+}
+
+function setSyncStatus(msg, ok) {
+  const el = document.getElementById('sync-status');
+  el.textContent = msg;
+  el.className = ok === true ? 'ok' : ok === false ? 'err' : '';
+}
+
+async function loadFromGitHub() {
+  const token = getToken();
+  if (!token) { setSyncStatus('No token set', false); return; }
+  setSyncStatus('Loading…', null);
+  try {
+    const res = await fetch(API, { headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } });
+    if (res.status === 404) { setSyncStatus('Ready — no data yet', null); return; }
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    const data = JSON.parse(atob(json.content.replace(/\n/g, '')));
+    state = data;
+    setSyncStatus('Synced ✓', true);
+    if (state.lastUpdated) {
+      document.getElementById('file-date').textContent = 'Last updated ' + new Date(state.lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    if (state.items && state.items.length) { showDashboard(); render(); }
+  } catch(e) {
+    setSyncStatus('Load error', false);
+    console.error(e);
+  }
+}
+
+async function saveToGitHub() {
+  const token = getToken();
+  if (!token) { showTokenModal(); return; }
+  setSyncStatus('Saving…', null);
+  try {
+    let sha = null;
+    const check = await fetch(API, { headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' } });
+    if (check.ok) { sha = (await check.json()).sha; }
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2))));
+    const body = { message: 'Update reorder data', content, ...(sha ? { sha } : {}) };
+    const res = await fetch(API, { method: 'PUT', headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(res.status);
+    setSyncStatus('Saved ✓', true);
+  } catch(e) {
+    setSyncStatus('Save error', false);
+    toast('Error saving to GitHub', true);
+    console.error(e);
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  const headers = parseRow(lines[0]);
+  return lines.slice(1).map(l => {
+    const vals = parseRow(l); const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    return obj;
+  });
+}
+function parseRow(line) {
+  const out = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') inQ = !inQ;
+    else if (c === ',' && !inQ) { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur); return out;
+}
+
+function csvToItems(rows) {
+  return rows.filter(r => (parseInt(r['AvailableQty']) || 0) <= (parseInt(r['MinQty']) || 0))
+    .map(r => {
+      const orderQty = parseInt(r['ReorderQty']) || 0;
+      const unitCost = parseFloat(r['MostRecentCost']) || 0;
+      const avail    = parseInt(r['AvailableQty']) || 0;
+      return {
+        itemID:    r['ItemID'],
+        itemName:  r['ItemName'],
+        itemGroup: r['ItemGroupName'],
+        vendor:    r['VendorName'].trim() || 'No Vendor on File',
+        phone:     r['BusinessPhone'].trim() || '',
+        onHand:    parseInt(r['OnHandQty']) || 0,
+        available: avail,
+        minQty:    parseInt(r['MinQty']) || 0,
+        orderQty, unitCost,
+        extCost:   orderQty * unitCost,
+        alert:     avail < 0,
+        zero:      avail === 0,
+      };
+    });
+}
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const newItems = csvToItems(parseCSV(e.target.result));
+    const newIds   = new Set(newItems.map(i => i.itemID));
+    state.struckIds = (state.struckIds || []).filter(id => newIds.has(id));
+    state.items = newItems;
+    state.lastUpdated = new Date().toISOString();
+    document.getElementById('file-date').textContent = file.name + ' · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    showDashboard();
+    render();
+    saveToGitHub();
+    toast(`Loaded ${newItems.length} items across ${new Set(newItems.map(i => i.vendor)).size} vendors`);
+  };
+  reader.readAsText(file);
+}
+
+function showDashboard() {
+  dropZone.style.display = 'none';
+  document.getElementById('stats-row').style.display = 'grid';
+  document.getElementById('toolbar').style.display = 'flex';
+}
+
+function initials(name) {
+  return name.split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '??';
+}
+
+function toggleStruck(itemID) {
+  const idx = state.struckIds.indexOf(itemID);
+  if (idx === -1) state.struckIds.push(itemID);
+  else state.struckIds.splice(idx, 1);
+  const isStruck = state.struckIds.includes(itemID);
+  const tr = document.querySelector(`tr[data-id="${itemID}"]`);
+  if (tr) {
+    tr.classList.toggle('struck', isStruck);
+    tr.classList.toggle('visible', isStruck && showStruck);
+    const btn = tr.querySelector('.strike-btn');
+    if (btn) btn.innerHTML = strikeIcon(isStruck);
+  }
+  updateStats();
+  saveToGitHub();
+}
+
+function strikeIcon(isStruck) {
+  return isStruck
+    ? `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 6l2.5 2.5L10 3"/></svg>`
+    : `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2v8M2 6h8"/></svg>`;
+}
+
+function updateStats() {
+  const struckSet = new Set(state.struckIds);
+  const active    = (state.items || []).filter(i => !struckSet.has(i.itemID));
+  const byVendor  = {};
+  active.forEach(i => { if (!byVendor[i.vendor]) byVendor[i.vendor] = []; byVendor[i.vendor].push(i); });
+  const totalCost = active.reduce((s, i) => s + i.extCost, 0);
+  document.getElementById('s-items').textContent   = active.length;
+  document.getElementById('s-vendors').textContent = Object.keys(byVendor).length;
+  document.getElementById('s-urgent').textContent  = active.filter(i => i.alert).length;
+  document.getElementById('s-cost').textContent    = totalCost > 0 ? '$' + totalCost.toFixed(2) : 'N/A';
+}
+
+document.getElementById('show-struck-cb').addEventListener('change', function() {
+  showStruck = this.checked;
+  document.querySelectorAll('tr.struck').forEach(tr => tr.classList.toggle('visible', showStruck));
+});
+
+function render() {
+  const struckSet = new Set(state.struckIds || []);
+  const items     = state.items || [];
+  const byVendor  = {};
+  items.forEach(item => { if (!byVendor[item.vendor]) byVendor[item.vendor] = []; byVendor[item.vendor].push(item); });
+
+  updateStats();
+
+  const list = document.getElementById('vendor-list');
+  list.innerHTML = '';
+
+  if (!items.length) { document.getElementById('empty').style.display = 'block'; return; }
+  document.getElementById('empty').style.display = 'none';
+
+  Object.keys(byVendor).sort().forEach(vendor => {
+    const vItems     = byVendor[vendor];
+    const activeItems = vItems.filter(i => !struckSet.has(i.itemID));
+    const vendorTotal = activeItems.reduce((s, i) => s + i.extCost, 0);
+    const hasCost     = activeItems.some(i => i.unitCost > 0);
+    const hasUrgent   = activeItems.some(i => i.alert);
+
+    const card = document.createElement('div');
+    card.className = 'vendor-card';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'vendor-header';
+    hdr.innerHTML = `
+      <div class="vendor-icon">${initials(vendor)}</div>
+      <div class="vendor-info">
+        <div class="vendor-name">${vendor}${hasUrgent ? ' <span class="badge badge-urgent">Urgent</span>' : ''}</div>
+        <div class="vendor-contact">${vItems[0].phone || 'No phone on file'}</div>
+      </div>
+      <div class="vendor-right">
+        <div class="vendor-total ${hasCost ? '' : 'no-cost'}">${hasCost ? '$' + vendorTotal.toFixed(2) : 'Cost N/A'}</div>
+        <div class="vendor-count">${activeItems.length} of ${vItems.length} item${vItems.length !== 1 ? 's' : ''} active</div>
+      </div>
+      <svg class="chevron open" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>`;
+
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'item-table-wrap';
+    tableWrap.innerHTML = `
+      <table>
+        <thead><tr>
+          <th style="width:42px"></th>
+          <th>Item ID</th>
+          <th>Item name</th>
+          <th class="r">On hand</th>
+          <th class="r">Available</th>
+          <th class="r">Order qty</th>
+          <th class="r">Unit cost</th>
+          <th class="r">Ext. cost</th>
+        </tr></thead>
+        <tbody>
+          ${vItems.map(i => {
+            const isStruck = struckSet.has(i.itemID);
+            return `<tr data-id="${i.itemID}" class="${i.alert ? 'urgent-row' : i.zero ? 'warn-row' : ''}${isStruck ? ' struck' + (showStruck ? ' visible' : '') : ''}">
+              <td><button class="strike-btn" onclick="toggleStruck('${i.itemID}')" title="${isStruck ? 'Restore item' : 'Mark as ordered / not needed'}">${strikeIcon(isStruck)}</button></td>
+              <td class="mono">${i.itemID}</td>
+              <td><div class="item-name">${i.itemName}</div><div class="item-group">${i.itemGroup}</div></td>
+              <td class="r mono">${i.onHand}</td>
+              <td class="r mono ${i.alert ? 'avail-neg' : ''}">${i.available}</td>
+              <td class="r"><span class="order-qty">${i.orderQty}</span></td>
+              <td class="r mono">${i.unitCost ? '$' + i.unitCost.toFixed(2) : '—'}</td>
+              <td class="r mono">${i.extCost > 0 ? '$' + i.extCost.toFixed(2) : '—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+
+    let open = true;
+    hdr.addEventListener('click', () => {
+      open = !open;
+      tableWrap.style.display = open ? '' : 'none';
+      hdr.querySelector('.chevron').classList.toggle('open', open);
+    });
+
+    card.appendChild(hdr);
+    card.appendChild(tableWrap);
+    list.appendChild(card);
+  });
+}
+
+let toastTimer;
+function toast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3500);
+}
+
+getToken() ? loadFromGitHub() : setSyncStatus('No GitHub token — click to set up', false);
+</script>
+</body>
+</html>
